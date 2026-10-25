@@ -176,3 +176,25 @@ branch=claude/magical-carson-x2agxw
 repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=Claude Code (main session)
+
+## [2026-10-25T10:49:29Z] Sub-agent T3: unit tests for evidence index, activity, integration
+
+User Prompt (verbatim, secrets redacted):
+Parent agent delegated: write independent unittest suites for evidence_index, activity, and an integration test chaining identity, parsers, index, planner per code/docs/tools_spec.md.
+
+Agent Response Summary:
+Wrote 126 stdlib unittest tests across three modules, testing against tools_spec.md T7/T8 and the integration criteria: the cutoff rule, strict mode, citable, for_subject linkage reasons, states_by_store, coverage/absent_in, activity templates/signals/links/flags, and real-data composition into the case_11 gold row with 74/75 citation agreement. No product code was edited. Found 3 low-severity bugs, each recorded as a @unittest.expectedFailure test with a "# BUG:" comment: the same-file tie-break sorts the source locator as a plain string, and the errors for a malformed manifest captured_at or activity event_time do not name the offending file_id/activity_id. Full suite green (158 run, 3 expected failures).
+
+Actions:
+* Created code/tests/test_evidence_index.py (74 tests), code/tests/test_activity.py (45 tests), code/tests/test_integration.py (7 tests)
+* Created fixture code/tests/fixtures/index/handover_fixture.txt (fictional records)
+* Ran python3 -m unittest discover -s code/tests -t code -p "test_<name>.py" per file and the full suite once (158 tests, OK, expected failures=3, ~2s)
+* Mutation-checked the index tests in memory via monkeypatching (no product files touched)
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=Claude Code (main session)
