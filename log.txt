@@ -136,3 +136,23 @@ branch=claude/magical-carson-x2agxw
 repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=Claude Code (main session)
+
+## [2026-10-25T10:27:30Z] Sub-agent C: build evidence index and activity tools T7-T8
+
+User Prompt (verbatim, secrets redacted):
+Parent agent delegated: implement T7 evidence index/time filter and T8 activity tools per code/docs/tools_spec.md.
+
+Agent Response Summary:
+Created code/ghostaudit/evidence_index.py (EvidenceIndex with subject linkage, time-filtered history/state, citable, coverage and absent_in) and code/ghostaudit/activity.py (ActivityLog plus parse_details with 23 text templates covering all 4,011 rows, 0 unknown). Synthetic index checks and real-data activity checks all pass. The real-data parser checks are PENDING because coder B's parsers package did not exist yet; a raw-text preview matched gold citations for 70/75 steps, and the 5 misses need coverage or PDF parsing.
+
+Actions:
+* Created code/ghostaudit/evidence_index.py and code/ghostaudit/activity.py
+* Ran throwaway check scripts in the session scratchpad (synthetic index, real activity, raw-text citation preview)
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=Claude Code (main session)
