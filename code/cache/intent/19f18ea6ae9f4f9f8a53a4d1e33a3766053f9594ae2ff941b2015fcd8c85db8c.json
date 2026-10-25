@@ -1,0 +1,13 @@
+{
+ "cache_key": "19f18ea6ae9f4f9f8a53a4d1e33a3766053f9594ae2ff941b2015fcd8c85db8c",
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "prompt_version": "intent-v1",
+ "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "result": {
+  "authorizes_deletion": true,
+  "confidence": 0.99,
+  "language": "en",
+  "quote": "deletion of the account registered to this email address",
+  "request_type": "deletion"
+ }
+}

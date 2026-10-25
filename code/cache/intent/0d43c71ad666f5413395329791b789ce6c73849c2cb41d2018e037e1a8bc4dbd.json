@@ -1,0 +1,13 @@
+{
+ "cache_key": "0d43c71ad666f5413395329791b789ce6c73849c2cb41d2018e037e1a8bc4dbd",
+ "model": "google/gemma-4-31b-it:free",
+ "prompt_version": "intent-v1",
+ "requested_model": "google/gemma-4-31b-it:free",
+ "result": {
+  "authorizes_deletion": true,
+  "confidence": 1.0,
+  "language": "en",
+  "quote": "erase the account linked to this email address",
+  "request_type": "deletion"
+ }
+}
