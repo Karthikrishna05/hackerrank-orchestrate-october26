@@ -1,0 +1,6 @@
+# The core pipeline needs only the Python 3.13 standard library and the `pdftotext`
+# binary (poppler-utils). These packages are needed only for the alternative PDF
+# backends in ghostaudit/parsers/pdf_text.py: "bs4" (with pdftotext -bbox-layout)
+# and "pypdf" (pure Python, no poppler needed).
+beautifulsoup4>=4.12
+pypdf>=4.0

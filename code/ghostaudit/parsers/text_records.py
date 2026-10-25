@@ -12,8 +12,8 @@ from ..rules import category_for
 from . import ParseWarning, checked_state, make_observation
 
 _SNAPSHOT = re.compile(r"^\s*Snapshot:\s*(\S+)", re.M)
-_ROW = re.compile(r"^\s*-\s*(\S+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*(.*?)\s*$")
 FIELD_NAMES = ("recorded_at", "system", "resource_id", "record_type", "result", "subject_reference")
+_ROW = re.compile(r"^\s*-\s+" + r"\s*\|\s*".join([r"([^|\s][^|]*?)"] * len(FIELD_NAMES)) + r"\s*$")
 
 
 def parse(entry: ManifestEntry, path: Path) -> tuple[list[Observation], list[Coverage]]:

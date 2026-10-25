@@ -156,3 +156,23 @@ branch=claude/magical-carson-x2agxw
 repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=Claude Code (main session)
+
+## [2026-10-25T10:36:02Z] Sub-agent B: build evidence parsers T6
+
+User Prompt (verbatim, secrets redacted):
+Parent agent delegated: implement T6 evidence parsers (SQL, JSON, logs, text, PDF with pdftotext/bs4/pypdf backends, image cache reader) per code/docs/tools_spec.md.
+
+Agent Response Summary:
+Built the ghostaudit.parsers package: one module per evidence format, plus parse_file/parse_all dispatch with deterministic sorting and warnings collected per file. parse_all yields 2,897 observations and 384 coverages from the 83 non-image files; the 11 PNGs return empty with one cache-miss warning each, and 0 of the 2,211 log lines are unrecognised. All 9 acceptance checks pass, and all 75 evidence citations in the public sample are consistent with the parsed states (checked as verification only, never used in logic). EVENT_STATE_RULES gained retained_order_loaded and contact_* events; thumbnail_failed is classed as noise.
+
+Actions:
+* Created code/ghostaudit/parsers/{__init__,sql_snapshot,json_records,logs,text_records,pdf_text,images}.py and code/requirements.txt
+* Ran throwaway acceptance, determinism (two PYTHONHASHSEED values), error-handling and PDF backend-equality scripts in /tmp/claude-0/coderB/ (none in the repo)
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=Claude Code (main session)
