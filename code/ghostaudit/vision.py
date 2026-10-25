@@ -37,16 +37,22 @@ CATEGORY_BY_PREFIX = {
     "legal_hold": "LEGAL_HOLD_RECORD", "cache": "CACHE_ENTRY", "email_delivery": "EMAIL_DELIVERY_LOG",
     "marketing": "MARKETING_PROFILE",
 }
-# Status labels -> state, in precedence order (first state with a matching label wins).
+# Status labels -> state; a label holding a negation word names none of these (see NEGATED_LABEL_STATES).
 LABEL_STATES = {
-    "DATA_FLOW": (("DISABLED", {"disabled", "paused", "stopped"}),
-                  ("ACTIVE", {"healthy", "continuous", "enabled"})),
-    "USER_EXPORT": (("NOT_FOUND", {"expired", "deleted"}),
-                    ("FOUND", {"ready", "collecting", "packaging", "processing"})),
+    "DATA_FLOW": (("ACTIVE", {"healthy", "continuous", "enabled"}),
+                  ("DISABLED", {"disabled", "paused", "stopped"})),
+    "USER_EXPORT": (("FOUND", {"ready", "collecting", "packaging", "processing"}),
+                    ("NOT_FOUND", {"expired", "deleted"})),
 }
+# Owner decision 19: a negated label -> state ("Not enabled", "No longer enabled" -> DISABLED).
+NEGATED_LABEL_STATES = {"DATA_FLOW": ("DISABLED", re.compile(r"\b(?:not|non|no)(?:\W+longer)?\W+enabled\b", re.I))}
+# Owner decision 18: when one record's labels name several states, the risky one wins (with a conflict note).
+RISKY_STATES = ("ACTIVE", "FOUND")
 LABEL_FIELD_WORDS = ("status", "mode", "state", "sync", "health")  # fields whose values act as labels
 RESTORE_BLOCK_WORDS = {"blocked", "disabled", "denied", "locked", "prohibited"}
 RESTORE_ALLOW_WORDS = {"allowed", "enabled", "eligible", "available", "restorable"}
+# Owner decision 17: other restore labels that clearly refuse restore ("Disallowed", a bare "No") -> BLOCKED.
+RESTORE_REFUSAL_WORDS = {"disallowed", "forbidden", "refused", "rejected", "never"}
 YES, NO = {"yes", "true", "on"}, {"no", "false", "off"}
 NEGATIONS = {"not", "no", "non"}
 # Categories whose policy is REDACT/ANONYMIZE: visible strong identifiers mean IDENTIFIABLE.
@@ -136,7 +142,7 @@ def _words(s: str) -> set[str]:
 
 
 def _restore_state(name: str, value: str) -> str | None:
-    """BLOCKED / ACTIVE from one restore field or label; None when it states neither."""
+    """BLOCKED / ACTIVE from one restore field or label; None when the label is unclear."""
     n, v = _words(name), _words(value)
     rules = ((RESTORE_BLOCK_WORDS, "BLOCKED", "ACTIVE"), (RESTORE_ALLOW_WORDS, "ACTIVE", "BLOCKED"))
     for words, hit, miss in rules:
@@ -145,7 +151,32 @@ def _restore_state(name: str, value: str) -> str | None:
     for words, hit, miss in rules:
         if v & words:  # the value states it: "Blocked", "Not allowed"
             return miss if v & NEGATIONS else hit
+    answer = {w for w in v if not w.startswith("restor")}  # "Restore: No" and a "Restore no" badge alike
+    if answer & RESTORE_REFUSAL_WORDS or (answer and answer <= NO):  # owner decision 17
+        return "BLOCKED"
+    if answer and answer <= YES:  # "Restore: Yes" allows restore
+        return "ACTIVE"
     return None
+
+
+def _label_states(category: str, label: str) -> set[str]:
+    """States one status label names for a LABEL_STATES category."""
+    w = _words(label)
+    states = {state for state, words in LABEL_STATES[category] if w & words and not w & NEGATIONS}
+    negated = NEGATED_LABEL_STATES.get(category)
+    if negated and negated[1].search(label):
+        states.add(negated[0])
+    return states
+
+
+def _decide(named: dict[str, str], what: str) -> tuple[str, str]:
+    """(state, rule) from {state: first label naming it}; owner decision 18: a conflict -> the risky state."""
+    if len(named) == 1:
+        (state, label), = named.items()
+        return state, f"{what} {label!r} -> {state}"
+    state = next((s for s in RISKY_STATES if s in named), min(named))
+    shown = ", ".join(f"{label!r} -> {s}" for s, label in sorted(named.items()))
+    return state, f"conflicting {what}s ({shown}) -> {state}, the risky state"
 
 
 def map_state(category: str | None, rec: dict, strong: set[str]) -> tuple[str, str]:
@@ -153,22 +184,29 @@ def map_state(category: str | None, rec: dict, strong: set[str]) -> tuple[str, s
     labels = [s for s in rec["statuses"] if s]
     labels += [f["value"] for f in rec["fields"] if any(w in f["name"].casefold() for w in LABEL_FIELD_WORDS)]
     if category in LABEL_STATES:
-        for state, words in LABEL_STATES[category]:
-            for label in labels:
-                w = _words(label)
-                if w & words and not w & NEGATIONS:
-                    return state, f"label {label!r} -> {state}"
-        return "UNKNOWN", f"no rule for labels {labels}"
+        named: dict[str, str] = {}
+        for label in labels:
+            for state in sorted(_label_states(category, label)):
+                named.setdefault(state, label)
+        return _decide(named, "label") if named else ("UNKNOWN", f"no rule for labels {labels}")
     if category == "BACKUP_ARCHIVE":
-        # A restore label that blocks or disallows restore -> BLOCKED; one that allows it -> ACTIVE.
-        # Owner decision 7: an archive listed with no restore label is a restore risk -> ACTIVE.
-        restore = [(f["name"], f["value"]) for f in rec["fields"] if "restor" in f["name"].casefold()]
+        # A restore label that blocks or refuses restore -> BLOCKED; one that allows it -> ACTIVE.
+        restore = [(f["name"], f["value"]) for f in rec["fields"]
+                   if "restor" in f["name"].casefold() and f["value"].strip()]
         restore += [("", s) for s in rec["statuses"] if "restor" in s.casefold()]
-        found = {s for s in (_restore_state(n, v) for n, v in restore) if s}
-        for state in ("BLOCKED", "ACTIVE"):
-            if state in found:
-                return state, f"restore label -> {state}"
-        return "ACTIVE", "archive listed, no restore label -> ACTIVE"
+        if not restore:  # owner decision 7: an archive listed with no restore label is a restore risk
+            return "ACTIVE", "archive listed, no restore label -> ACTIVE"
+        named, unclear = {}, []
+        for n, v in restore:
+            label = f"{n}: {v}" if n else v
+            state = _restore_state(n, v)
+            if state:
+                named.setdefault(state, label)
+            else:
+                unclear.append(label)
+        if not named:  # owner decision 17: neither allows nor clearly refuses restore
+            return "UNKNOWN", f"unrecognised restore labels {unclear} -> UNKNOWN"
+        return _decide(named, "restore label")
     if category in EXPOSURE_CATEGORIES:
         exposed = {t for t in strong if not (category == "ACCOUNT_TOMBSTONE" and t.startswith("user_"))}
         if exposed or (category == "ACCOUNT_TOMBSTONE" and rec["names"]):
@@ -273,7 +311,7 @@ def fill_cache(manifest: list[ManifestEntry] | None = None, *, client: llm.OpenR
     unless the error is fatal or a spent rate-limit budget (then the remaining files are left for the next run)."""
     entries = screenshots(manifest)
     activity = load_activity() if activity is None else activity
-    summary = {"called": 0, "remapped": 0, "failed": {}, "files": {}, "stopped": None}
+    summary = {"called": 0, "remapped": 0, "failed": {}, "files": {}, "stopped": None, "stopped_status": None}
     todo = {e.file_id for e in pending(entries, force)}
     if todo:
         client = client or llm.OpenRouterClient()
@@ -290,11 +328,11 @@ def fill_cache(manifest: list[ManifestEntry] | None = None, *, client: llm.OpenR
             continue
         try:
             data, usage = client.chat_json(messages_for(evidence_path(entry.file_path)), model=client.vision_model,
-                                           task="vision", schema_check=check_extraction)
+                                           task="vision", kind="vision", schema_check=check_extraction)
         except llm.LLMError as exc:
             summary["failed"][entry.file_id] = str(exc)
             if exc.fatal or exc.rate_limited:
-                summary["stopped"] = str(exc)
+                summary["stopped"], summary["stopped_status"] = str(exc), exc.status
             continue
         raw = {"file_id": entry.file_id, "captured_at": to_iso(entry.captured_at), "prompt_version": PROMPT_VERSION,
                "requested_model": usage.requested_model, "model": usage.model, "extraction": normalize_extraction(data)}

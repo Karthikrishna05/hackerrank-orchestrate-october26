@@ -66,6 +66,11 @@ def email_hash(email: str) -> str:
     return hashlib.sha256(norm_email(email).encode("utf-8")).hexdigest()
 
 
+def text_key(text: str) -> str:
+    """Key of a request text (the intent cache key): SHA-256 hex digest of the stripped UTF-8 text."""
+    return hashlib.sha256(text.strip().encode("utf-8")).hexdigest()
+
+
 def name_token(name: str) -> str:
     """Weak identifier token for a person's name: `name:<normalised name>`."""
     return NAME_PREFIX + norm_name(name)

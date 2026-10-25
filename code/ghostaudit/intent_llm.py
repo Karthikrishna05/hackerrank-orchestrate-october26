@@ -6,13 +6,13 @@ PROMPT_VERSION. Cache hits make no call; failed batches are left uncached and re
 
 from __future__ import annotations
 
-import hashlib
 import json
 from collections.abc import Iterable
 from pathlib import Path
 
 from . import llm
 from .models import IntentResult
+from .normalize import text_key
 
 PROMPT_VERSION = "intent-v1"
 REQUEST_TYPES = ("deletion", "deletion_verification", "access", "export", "correction",
@@ -72,8 +72,8 @@ FEW_SHOT = [
 
 
 def cache_key(text: str) -> str:
-    """SHA-256 hex digest of the stripped UTF-8 text."""
-    return hashlib.sha256(text.strip().encode("utf-8")).hexdigest()
+    """SHA-256 hex digest of the stripped UTF-8 text (shared with engine.text_key, owner decision 26)."""
+    return text_key(text)
 
 
 def cache_path(key: str) -> Path:
@@ -84,7 +84,8 @@ def _from_record(rec: dict) -> IntentResult:
     r = rec["result"]
     return IntentResult(authorizes_deletion=r["authorizes_deletion"], request_type=r["request_type"],
                         language=r["language"], confidence=r["confidence"],
-                        source=f"llm:{rec.get('model') or 'unknown'}", quote=r.get("quote", ""))
+                        source=f"llm:{rec.get('model') or rec.get('requested_model') or 'unknown'}",  # decision 28
+                        quote=r.get("quote", ""))
 
 
 def cached(text: str) -> IntentResult | None:
@@ -172,7 +173,7 @@ def classify_all(texts: Iterable[str], *, client: llm.OpenRouterClient | None = 
         else:
             results[key] = hit
     stats = {"texts": len(keyed), "cached": len(results), "classified": 0, "calls": 0, "failed": [],
-             "errors": [], "stopped": None}
+             "errors": [], "stopped": None, "stopped_status": None}
     if misses:
         client = client or llm.OpenRouterClient()
         if not client.has_key():
@@ -182,13 +183,13 @@ def classify_all(texts: Iterable[str], *, client: llm.OpenRouterClient | None = 
         batch_texts = [keyed[k] for k in batch]
         try:
             data, usage = client.chat_json(build_messages(batch_texts), model=client.text_model, task="intent",
-                                           schema_check=lambda d, n=len(batch): validate(d, n))
+                                           kind="text", schema_check=lambda d, n=len(batch): validate(d, n))
         except llm.LLMError as exc:
             stats["failed"].extend(batch)
             stats["errors"].append(str(exc))
             if exc.fatal or exc.rate_limited:
                 stats["failed"].extend(misses[start + batch_size:])
-                stats["stopped"] = str(exc)
+                stats["stopped"], stats["stopped_status"] = str(exc), exc.status
                 break
             continue
         stats["calls"] += usage.calls

@@ -21,11 +21,25 @@ def _rx(*parts: str) -> re.Pattern:
 
 
 _DEL_VERB = r"delete|erase|remove|close|deactivate|wipe|purge"
+# Deletion words in every Latin-script language (the stems DELETION uses), for ACCOUNT_DELETION.
+_DEL_WORD = (r"delet\w*|eras(?:e|ed|es|ing|ure)|remov\w*|clos(?:e|ed|ing|ure)|deactivat\w*|wip(?:e|ed|ing)|purg\w*|"
+             r"exclu(?:ir|são|sao|am|a|ída|ido)|apag(?:ar|uem|ue|ado|ados)|encerr(?:ar|amento|em)|"
+             r"remo(?:ver|vam|ção|cao)|elimin(?:ar|ación|acion|ação|acao|en|e|ado|ada)|borr(?:ar|en|e|ado|ada)|"
+             r"supr(?:imir|iman|esión|esion)|cerr(?:ar|ada|ado)|cierr(?:en|e)|supprim\w*|suppression|effac\w*|"
+             r"clôtur\w*|clotur\w*|ferm(?:er|ez|eture)")
+_DEL_PARTICIPLE = (r"(?:delet|eras|remov|clos|deactivat|wip|purg)ed|(?:elimin|borr|cerr|suprim|apag|encerr)ad[oa]s?|"
+                   r"exclu[ií]d[oa]s?|removid[oa]s?|(?:supprim|effac|ferm|clôtur|clotur)ée?s?")
+_ACCOUNT_WORD = r"account|profile|cuenta|conta|compte|perfil|profil"
+# French: the deletion word must follow in the same clause, with no keep verb in between
+# ("je ne souhaite pas garder mon compte : merci de le supprimer" asks for deletion).
+_FR_GAP = r"(?:(?!\b(?:garder|conserver|maintenir|mais)\b)[^.!?:;]){0,40}?"
+_FR_DEL = r"(?:supprim|suppression|effac|ferm|clôtur|clotur)"
 # A refusal must cover the whole account or all data; "do not remove my order history" only limits scope.
 _WHOLE = (r"(?:\s+or\s+\w+)?(?:\s*[.!?,;]|\s*$|\s+(?:anything|it|any\s+of\s+my\s+\w+|"
           r"(?:the|my|this)\s+(?:account|profile|data|records|personal\s+data)\b))")
 
-# Explicit refusals of deletion, in every supported language.
+# Explicit refusals of deletion, in every supported language. A wish ("no quiero ...", "ne ... pas ...")
+# is a refusal only when a deletion word follows in the same clause (owner decision 20).
 NEGATION = _rx(
     # en
     r"\bnot\s+(?:asking|requesting|seeking|looking)\s+(?:for\s+)?(?:an?\s+|the\s+|any\s+)?(?:account\s+)?"
@@ -34,27 +48,35 @@ NEGATION = _rx(
     r"\bnot\s+a\s+request\s+(?:to|for)\s+(?:" + _DEL_VERB + r"|deletion|erasure)",
     r"\b(?:do\s+not|don['’]t|dont|never)\s+(?:\w+\s+){0,2}?(?:" + _DEL_VERB + r")\b" + _WHOLE,
     r"\bwithout\s+(?:deleting|erasing|removing|closing)\b" + _WHOLE,
-    r"\b(?:keep|leave)\s+(?:the|my|this)\s+(?:account|profile)\b[^.!?]*?"
-    r"\b(?:as\s+it\s+is|as\s+is|active|open|in\s+place|unchanged)\b",
-    r"\b(?:continue|keep)\s+using\s+(?:the|this|my)\s+(?:service|account)\b",
-    r"\bstill\s+(?:need|use)\s+(?:the|this|my|it)\b",
     # pt
     r"\bnão\s+(?:\w+\s+){0,3}?(?:excluir|exclua|apagar|apague|eliminar|elimine|remover|remova|encerrar|encerre|"
     r"exclusão|eliminação|remoção|encerramento)\b",
     r"\bsem\s+(?:excluir|apagar|eliminar|remover|encerrar)\b",
     # es ("no" alone is also Portuguese "in the", so a verb must follow directly)
-    r"\bno\s+(?:quiero|deseo|solicito|pido|estoy\s+pidiendo|eliminen|elimine|borren|borre|cierren|cierre|"
-    r"supriman)\b",
+    r"\bno\s+(?:eliminen|elimine|borren|borre|cierren|cierre|supriman)\b",
+    r"\bno\s+(?:quiero|deseo|solicito|pido|estoy\s+pidiendo)\s+(?:que\s+)?(?:\w+\s+){0,2}?"
+    r"(?:elimin|borr|supr|cerr|cierr)\w*",
     r"\bsin\s+(?:eliminar|borrar|suprimir|cerrar)\b",
     # fr
-    r"\bne\s+(?:\w+\s+){0,2}?pas\b[^.!?]{0,40}?(?:supprim|suppression|effac|ferm|clôtur|clotur)",
-    r"\bn['’]\w+\s+pas\b[^.!?]{0,40}?(?:supprim|suppression|effac|ferm|clôtur|clotur)",
+    r"\bne\s+(?:\w+\s+){0,2}?pas\b" + _FR_GAP + _FR_DEL,
+    r"\bn['’]\w+\s+pas\b" + _FR_GAP + _FR_DEL,
     r"\bsans\s+(?:supprimer|effacer|fermer|clôturer)\b",
     # ja
     r"(?:削除|消去|退会|解約)(?:は|を)?(?:しないで|しない|不要|希望しません|求めていません|ではありません|ではなく|しません|しなくて)",
     # ko
     r"(?:삭제|탈퇴|파기)[^.!?。]{0,10}?(?:하지\s*마|하지\s*말|원하지\s*않|아닙|아니라|않습니다|않아)",
 )
+
+# Wishes to keep the account: a refusal only when nothing negates them in their clause (owner decision 20:
+# "I do not want to keep using the service" asks for deletion).
+KEEP_WISH = _rx(
+    r"\b(?:keep|leave)\s+(?:the|my|this)\s+(?:account|profile)\b[^.!?]*?"
+    r"\b(?:as\s+it\s+is|as\s+is|active|open|in\s+place|unchanged)\b",
+    r"\b(?:continue|keep)\s+using\s+(?:the|this|my)\s+(?:service|account)\b",
+    r"\bstill\s+(?:need|use)\s+(?:the|this|my|it)\b",
+)
+_NEGATED_CLAUSE = re.compile(r"n't\b|\b(?:not|never|no\s+longer|cannot|dont)\b", re.IGNORECASE)
+_CLAUSE_END = re.compile(r"[.!?;:。？！]")
 
 # Deletion wording. Closing counts only next to an account or profile word in the same sentence.
 DELETION = _rx(
@@ -73,6 +95,15 @@ DELETION = _rx(
     # ja / ko
     r"削除|消去|抹消|退会",
     r"삭제|탈퇴|파기|지워",
+)
+
+# Deletion of the account itself: the only deletion wording trusted in a sentence about marketing
+# ("remove me from the newsletter" opts out; "close my account and stop the marketing emails" deletes).
+ACCOUNT_DELETION = _rx(
+    r"\b(?:" + _DEL_WORD + r")\s+(?:\w+\s+){0,2}?(?:" + _ACCOUNT_WORD + r")\b",
+    r"\b(?:" + _ACCOUNT_WORD + r")\b\s+(?:\w+\s+){0,2}?(?:" + _DEL_PARTICIPLE + r")(?!\w)",
+    r"\bdar\s+de\s+baja\s+(?:mi|la)\s+cuenta\b",
+    r"(?:アカウント|계정)[^。.!?]{0,10}?(?:削除|消去|抹消|退会|삭제|탈퇴|파기)",
 )
 
 # A request to verify or audit a deletion counts as deletion (the samples treat it so).
@@ -145,6 +176,16 @@ def _first(rx: re.Pattern, text: str) -> str:
     return m.group(0).strip() if m else ""
 
 
+def _refusal(text: str) -> str:
+    """The leftmost explicit refusal, or wish to keep the account that nothing negates in its clause."""
+    found = [m for m in (NEGATION.search(text),) if m]
+    for m in KEEP_WISH.finditer(text):
+        if not _NEGATED_CLAUSE.search(_CLAUSE_END.split(text[:m.start()])[-1]):
+            found.append(m)
+            break
+    return min(found, key=lambda m: m.start()).group(0).strip() if found else ""
+
+
 def _topic(text: str) -> str:
     return next((name for name, rx in TOPICS if rx.search(text)), "other")
 
@@ -153,13 +194,14 @@ def classify(text: str) -> IntentResult:
     """Keyword verdict on whether `text` authorizes deletion (source="rules")."""
     t = _norm(text)
     lang = detect_language(t)
-    refusal = _first(NEGATION, t)
+    refusal = _refusal(t)
     if refusal:
         return IntentResult(False, _topic(t), lang, 0.9, SOURCE, refusal)
     deletion = ""
     for sentence in _SENTENCE.split(t):
-        if sentence and not _MARKETING.search(sentence):
-            deletion = _first(DELETION, sentence)
+        if sentence:
+            # Owner decision 20: a sentence about marketing counts only for deletion of the account itself.
+            deletion = _first(ACCOUNT_DELETION if _MARKETING.search(sentence) else DELETION, sentence)
             if deletion:
                 break
     verify = _first(VERIFICATION, t)

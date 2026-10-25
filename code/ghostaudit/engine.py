@@ -7,7 +7,6 @@ is skipped and recorded in `CaseResult.notes` ("kind: detail"), never guessed si
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 from collections.abc import Callable, Iterable, Sequence
@@ -26,7 +25,7 @@ from .models import (
     Step,
     SubjectProfile,
 )
-from .normalize import natural_key, split_resource_id, system_for
+from .normalize import natural_key, norm_email, split_resource_id, system_for, text_key
 from .planner import MATRIX, NOT_APPLICABLE, assemble, plan
 from .rules import DATA_FLOW, PolicyTable
 from .steps import sort_and_number, validate
@@ -100,6 +99,8 @@ STATE_RULES = {
 COMPLIANT_STATE = {"REDACT": "REDACTED", "ANONYMIZE": "ANONYMIZED"}
 # Identifier types a category may keep (a tombstone keeps its stable user_id).
 PERMITTED_IDENTIFIERS = {"ACCOUNT_TOMBSTONE": re.compile(r"user_\d+")}
+# Categories whose policy also removes the person's name (owner decision 20: a tombstone keeps user_id only).
+NAME_EXPOSED_CATEGORIES = frozenset({"ACCOUNT_TOMBSTONE"})
 
 # S3 fallback: a linked resource with no observation is treated as present (fail-safe), per kind.
 PRESENT_STATE = {"DELETE": "FOUND", "REDACT": "IDENTIFIABLE", "ANONYMIZE": "IDENTIFIABLE",
@@ -132,11 +133,6 @@ class CaseResult:
 def note_kind(note: str) -> str:
     """The kind prefix of a note ("link_fallback: ..." -> "link_fallback")."""
     return note.split(":", 1)[0]
-
-
-def text_key(text: str) -> str:
-    """Cache key of a request text: sha256 of its UTF-8 bytes."""
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def llm_cache_lookup() -> Callable[[str], IntentResult | None] | None:
@@ -355,9 +351,21 @@ def _retention_expired(res: _Resource, audit: str, notes: list[str]) -> bool:
 
 
 def _exposed(o: Observation, category: str) -> bool:
-    """A strong identifier (not a name, not one the category may keep) is left in the observation."""
+    """A prohibited identifier is left: a strong one the category may not keep, or a name where policy
+    removes names too (NAME_EXPOSED_CATEGORIES)."""
     keep = PERMITTED_IDENTIFIERS.get(category)
-    return any(not t.startswith(NAME_PREFIX) and not (keep and keep.fullmatch(t)) for t in o.identifiers)
+    names = category in NAME_EXPOSED_CATEGORIES
+    return any(names if t.startswith(NAME_PREFIX) else not (keep and keep.fullmatch(t)) for t in o.identifiers)
+
+
+def _matrix_state(kind: str, category: str, o: Observation) -> str | None:
+    """The decision-matrix state one observation shows for this kind, or None when the tables cannot map it."""
+    if (kind, o.state) in MATRIX:
+        return o.state
+    rule = STATE_RULES.get((kind, o.state))
+    if rule == "@identifiers":
+        rule = "IDENTIFIABLE" if _exposed(o, category) else COMPLIANT_STATE[kind]
+    return rule if rule and (kind, rule) in MATRIX else None
 
 
 def _planner_state(kind: str, category: str, current: Observation | None, res: _Resource,
@@ -370,34 +378,37 @@ def _planner_state(kind: str, category: str, current: Observation | None, res: _
         state = PRESENT_STATE[kind]
         notes.append(f"link_assumed_present: {res.rid} treated as {state} ({kind}) citing {res.link.activity_id}")
         return state
-    state = current.state
-    if (kind, state) in MATRIX:
+    state = _matrix_state(kind, category, current)
+    if state is not None:
+        if state != current.state:
+            notes.append(f"state_mapped: {res.rid} {kind} {current.state} -> {state}")
         return state
-    rule = STATE_RULES.get((kind, state))
-    if rule == "@identifiers":
-        rule = "IDENTIFIABLE" if _exposed(current, category) else COMPLIANT_STATE[kind]
-    if rule and (kind, rule) in MATRIX:
-        notes.append(f"state_mapped: {res.rid} {kind} {state} -> {rule}")
-        return rule
-    if kind == "RETAIN" and state == "NOT_FOUND":
+    if kind == "RETAIN" and current.state == "NOT_FOUND":
         notes.append(f"retained_missing: {res.rid} must be retained but is absent at audit_at")
     else:
-        notes.append(f"state_undecidable: {res.rid} {kind} {state} in {current.file_id}")
+        notes.append(f"state_undecidable: {res.rid} {kind} {current.state} in {current.file_id}")
     return None
 
 
-def _citation(res: _Resource, ctx: Context, audit: str, absent: bool) -> str:
-    """S6: latest file captured by audit_at that observes the resource; for an absence, a full listing."""
+def _citation(res: _Resource, ctx: Context, audit: str, kind: str, category: str, state: str) -> str:
+    """S6: the latest file captured by audit_at whose own view of the resource shows the decided state.
+
+    A file's view is its latest observation of the resource per store up to audit_at (document evidence
+    matched through a link row included); it shows the decided state when it leads to the same matrix row
+    (for a DELETE record, FOUND and IDENTIFIABLE both mean present). Owner decision 20: a file showing
+    another state is never cited. Owner decision 23: an absence that no such file shows cites the newest
+    pre-audit listing (absent_in).
+    """
     cut = parse_ts(audit)
-    # Candidates: document evidence matched through a link row, plus the index's own choice
-    # (any observation of that file carries its captured_at).
-    found = [o for o in res.history if o.resource_id != res.rid and parse_ts(o.captured_at) <= cut]
-    best = ctx.evidence.citable(res.rid, audit)
-    if best:
-        found += ctx.evidence.in_file(best)[:1]
-    if found:
-        return max(found, key=lambda o: (parse_ts(o.captured_at), natural_key(o.file_id))).file_id
-    if absent:
+    row = MATRIX[(kind, state)]
+    views: dict[tuple[str, str, str], Observation] = {}
+    for o in res.history:  # oldest first, so the last one per key is the file's view
+        views[(o.file_id, o.resource_id, o.store or "")] = o
+    shows = [o for o in views.values()
+             if parse_ts(o.captured_at) <= cut and MATRIX.get((kind, _matrix_state(kind, category, o))) == row]
+    if shows:
+        return max(shows, key=lambda o: (parse_ts(o.captured_at), natural_key(o.file_id))).file_id
+    if state == "NOT_FOUND":
         cov = ctx.evidence.absent_in(res.rid, res.system_id, audit)
         if cov:
             return cov.file_id
@@ -424,7 +435,14 @@ def audit_case(request: Request, ctx: Context) -> CaseResult:
     notes: list[str] = []
     audit = request.audit_at
     intent = ctx.intent(request.request_text)
-    profile = ctx.identities.resolve(request.email)
+    try:
+        profile = ctx.identities.resolve(request.email)
+    except LookupError:  # owner decision 20: an email held by several users cannot be resolved safely
+        owners = sorted(ctx.identities.owner_of(norm_email(request.email)), key=natural_key)
+        notes.append(f"identity_ambiguous: request email belongs to {', '.join(owners)}")
+        if not intent.authorizes_deletion:
+            return CaseResult(NOT_APPLICABLE[0], [], notes, request.case_id, intent)
+        return _safest(request.case_id, intent, notes, "request email belongs to several users")
     if profile is None:
         if not intent.authorizes_deletion:
             return CaseResult(NOT_APPLICABLE[0], [], notes, request.case_id, intent)
@@ -456,20 +474,30 @@ def audit_case(request: Request, ctx: Context) -> CaseResult:
             notes.append(f"earlier_request_record: {res.rid} absent, all evidence before requested_at; skipped")
             continue
         finding = MATRIX[(kind, state)][0] is not None
-        evidence = _citation(res, ctx, audit, absent=state == "NOT_FOUND")
+        evidence = _citation(res, ctx, audit, kind, category, state)
+        if not evidence and current is None and res.link is not None:
+            # Owner decisions 10 and 20: a record known only from a link row cites it, retained ones included.
+            evidence = res.link.activity_id
         if finding and not evidence:
-            if current is None and res.link is not None:
-                evidence = res.link.activity_id
-            elif current is not None and kind not in (DATA_FLOW, "BACKUP_ARCHIVE"):
+            if current is not None and kind not in (DATA_FLOW, "BACKUP_ARCHIVE"):
                 # Owner decision 6: a record seen present by audit_at only in a file captured later
                 # cites the workflow's own failed or partial deletion attempt, never the late file.
                 evidence = _unsuccessful_attempt(res.rid, ctx, audit)
                 if evidence:
                     notes.append(f"late_export_cited_activity: {res.rid} {state} seen only in a file captured "
                                  f"after audit_at; citing {evidence}")
+                elif res.link is not None:
+                    # Owner decision 22: no such attempt, but a subject link row inside the window.
+                    evidence = res.link.activity_id
+                    notes.append(f"late_export_cited_link: {res.rid} {state} seen only in a file captured "
+                                 f"after audit_at; citing {evidence}")
             if not evidence:
                 notes.append(f"uncitable_finding: {res.rid} {state} has no evidence captured by audit_at; skipped")
                 continue
+        if not evidence and state == "NOT_FOUND":
+            # Owner decision 23: a COMPLETE case drops this check (uncited_verification below).
+            notes.append(f"late_absence_uncited: {res.rid} absent only in files captured after audit_at "
+                         "and no pre-audit listing proves it")
         plans.append(plan(res.system_id, res.rid, kind, state, evidence))
 
     if not plans:

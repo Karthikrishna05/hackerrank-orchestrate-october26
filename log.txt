@@ -473,3 +473,24 @@ repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=none
 
+
+## [2026-10-25T12:51:16Z] Sub-agent F2: implement owner decisions 16-31
+
+User Prompt (verbatim, secrets redacted):
+Parent agent delegated: implement owner-approved decisions 16-31 (retry/fallback policy, vision label rules, five engine/intent bug fixes, decision-6 link citation, late absence, CLI and cache-key fixes) per code/docs/engine_plan.md.
+
+Agent Response Summary:
+Implemented decisions 16-31: the OpenRouter client now waits max(Retry-After, 2/4/8 s), gives each model 4 tries on 429/5xx/timeouts/model-unavailable and then switches to the task's fallback model (8 attempts at most), keeps 401/402 fatal and records the requested model when a reply omits it. Vision maps unclear restore labels to UNKNOWN, clear refusals to BLOCKED, conflicts to the risky state with a note, and "Not enabled" to DISABLED. The engine cites only files whose view gives the decided state (absent_in for absences), handles ambiguous emails, exposed tombstone names, link-only retained records and decision-6 link rows; intent rules fix the false refusals and the lost closure; main.py and ai_cli fail cleanly. 1021 tests pass with 0 expected failures; output.csv is byte-identical to the committed one and the sample precision stays 100%.
+
+Actions:
+* Edited code/ghostaudit/llm.py, intent_llm.py, vision.py, engine.py, intent_rules.py, ai_cli.py, normalize.py, code/main.py
+* Flipped 9 expected-failure tests to regressions; updated 2 test_llm.py assertions changed by decisions 16 and 31
+* Ran the unit suite, two --intent rules runs (sha256 compare with committed output.csv), the sample run plus scorer, and an offline fake-server fallback demo (dummy key, temp cache)
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=Claude Code (main session)

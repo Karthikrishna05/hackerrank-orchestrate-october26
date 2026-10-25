@@ -515,8 +515,9 @@ class TransientRetryTests(TempCacheMixin, unittest.TestCase):
                 openrouter_env(base_url=srv.url):
             with self.assertRaises(llm.LLMError) as cm:
                 make_client(sleep=sleep, max_wait_s=10.0).chat_json(USER_MSG, task="unit")
-        self.assertEqual(sleep.calls, [3.0, 3.0, 3.0])
-        self.assertEqual(len(srv.chat_requests), 4)
+        # Owner decision 16: each wait is max(Retry-After, 2/4/8 s backoff); a third (8 s) passes the budget.
+        self.assertEqual(sleep.calls, [3.0, 4.0])
+        self.assertEqual(len(srv.chat_requests), 3)
         self.assertTrue(cm.exception.rate_limited)
         self.assertFalse(cm.exception.fatal)
 
@@ -570,11 +571,7 @@ class TransientRetryTests(TempCacheMixin, unittest.TestCase):
         self.assertEqual(urlopen.call_count, 3)
         self.assertEqual(len(sleep.calls), 2)
 
-    # BUG: a server that keeps answering 429 with "Retry-After: 0" (or an HTTP date in the past) makes
-    # chat_json retry forever: each delay is 0, so the wait budget (max_wait_s) is never spent and there is
-    # no attempt cap or minimum backoff. The plan requires exponential backoff and a bounded retry budget.
-    # Suggested fix: cap attempts (e.g. 6) or use max(retry_after, base_delay_s * 2 ** (n - 1)) as the delay.
-    @unittest.expectedFailure
+    # Regression: Retry-After: 0 still waits the growing backoff; attempts are capped (owner decisions 16, 30).
     def test_retry_after_zero_does_not_retry_forever(self):
         sleep = SleepRecorder(abort_after=25)  # aborts the runaway loop instead of hanging the suite
         with FakeOpenRouter(responder=lambda req: error_reply(429, headers={"Retry-After": "0"})) as srv, \
@@ -606,8 +603,9 @@ class NonTransientStatusTests(TempCacheMixin, unittest.TestCase):
         self.assertEqual(len(srv.chat_requests), 2)
         self.assertFalse(cm.exception.fatal)
 
-    def test_401_402_403_404_are_fatal_and_not_retried(self):
-        for status in (401, 402, 403, 404):
+    def test_401_402_403_are_fatal_and_not_retried(self):
+        # 404 means the model is unavailable: retried, then the fallback model (owner decision 31).
+        for status in (401, 402, 403):
             sleep = SleepRecorder()
             with FakeOpenRouter(responder=lambda req, s=status: error_reply(s)) as srv, \
                     openrouter_env(base_url=srv.url):

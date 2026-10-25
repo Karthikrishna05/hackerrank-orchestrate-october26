@@ -329,12 +329,7 @@ class CompleteCaseTest(EngineCase):
         self.assertIn("uncited_verification", kinds(result))
         self.assertValidRow(result)
 
-    # BUG: engine._citation prefers any citable file that observes the record, even for an absence.
-    # Here the only file captured by audit_at shows the record FOUND before the request, while its
-    # absence is seen only in a later-captured file; the VERIFY_RECORD_ABSENT step cites the FOUND
-    # file. AGENTS.md §6.6: a COMPLETE check must cite evidence proving the compliant state; plan S6:
-    # "absent_in() for absence". Expected: cite the coverage (or drop the step), never evidence_951.
-    @unittest.expectedFailure
+    # Regression: an absence never cites a file showing the record present (owner decisions 20, 23).
     def test_absence_is_never_cited_with_a_file_that_shows_the_record_present(self):
         world = [
             obs("account_9351", "FOUND", file_id="evidence_951", observed=BEFORE, category="USER_PROFILE",
@@ -387,12 +382,7 @@ class NotApplicableTest(EngineCase):
         self.assertTrue(result.intent.authorizes_deletion)
         self.assertIn("safest_row", kinds(result))
 
-    # BUG: engine.audit_case lets IdentityIndex.resolve's LookupError (an email held by two users)
-    # escape, and code/main.py turns it into "error: ..." with exit code 2, so one ambiguous request
-    # aborts the whole run with no output.csv. Plan §5.7: "A case that can't be decided falls back to
-    # the safest valid answer and is listed in the run report." Suggested fix: catch LookupError
-    # around resolve() and return _safest(..., "request email belongs to several users").
-    @unittest.expectedFailure
+    # Regression: an email held by two users gives the safest row with a note (owner decision 20).
     def test_email_held_by_two_users_falls_back_to_the_safest_row(self):
         log = AUDIT_LOG + (AuditChange("audit_9002", OTHER_USER, "2026-05-01T00:00:00Z", "email", EMAIL,
                                        OTHER_EMAIL),)
@@ -511,10 +501,7 @@ class TombstoneTest(EngineCase):
         self.assertEqual([t[3] for t in tuples(result.steps)],
                          ["REPORT_EXPOSED_PII", "REDACT_RECORD", "VERIFY_RECORD_REDACTED"])
 
-    # BUG: engine._exposed ignores `name:` tokens, so a tombstone that still shows the person's name
-    # next to the stable user_id counts as REDACTED. AGENTS.md §6.5: a tombstone must also remove the
-    # name. Suggested fix: for ACCOUNT_TOMBSTONE treat a name token as exposed.
-    @unittest.expectedFailure
+    # Regression: a tombstone that still shows the person's name is exposed (owner decision 20).
     def test_tombstone_still_showing_the_name_is_exposed(self):
         result = audit_case(req(), make_ctx([obs("tombstone_9603", "FOUND", category="ACCOUNT_TOMBSTONE",
                                                  ids={USER, "name:mira calloway"})]))
@@ -665,12 +652,7 @@ class Decision6LateExportTest(EngineCase):
                 result = self._run([self.LATE_ACCOUNT], [attempt("activity_9906", "account_9901", when, result_text)])
                 self.assertEqual(for_rid(result, "account_9901")[0][5], "activity_9906")
 
-    # BUG: engine._citation picks the latest citable file that observes the record whatever state that
-    # file shows. Here the record is absent in the citable file and present only in a file captured
-    # after audit_at, so decision 6 applies; the finding should cite the failed attempt, but it cites
-    # evidence_961, which shows the record NOT_FOUND. Same root cause as
-    # CompleteCaseTest.test_absence_is_never_cited_with_a_file_that_shows_the_record_present.
-    @unittest.expectedFailure
+    # Regression: a finding never cites a file showing the record absent (owner decision 20).
     def test_finding_is_never_cited_with_a_file_that_shows_the_record_absent(self):
         world = [
             obs("account_9961", "NOT_FOUND", file_id="evidence_961", observed="2026-09-02T09:00:00Z",
@@ -777,11 +759,7 @@ class LinkRowTest(EngineCase):
                           "evidence_956"))
         self.assertIn("link_document", kinds(result))
 
-    # BUG: decision 10 says a link-only record "is assumed present and cites the link row's
-    # activity_id", but engine.audit_case uses the link row only for findings. A link-only retained
-    # record (RETAIN -> VERIFY_RECORD_PRESENT) in a COMPLETE case is dropped as uncited instead of
-    # citing the link row. No real case is affected today.
-    @unittest.expectedFailure
+    # Regression: a link-only retained record cites its link row in a COMPLETE case (owner decisions 10, 20).
     def test_link_only_retained_record_cites_the_link_row(self):
         rows = [link("activity_9957", "audit_record_9957", DURING)]
         result = audit_case(req(), make_ctx([COMPLIANT_COMPANION], activity=rows))

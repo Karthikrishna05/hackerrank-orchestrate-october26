@@ -6,6 +6,7 @@ Usage: python code/main.py [--requests deletion_requests.csv] [--output output.c
 from __future__ import annotations
 
 import argparse
+import csv
 import sys
 import time
 from collections import Counter
@@ -54,7 +55,12 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     start = time.monotonic()
-    requests = _requests(args.requests)
+    try:
+        requests = _requests(args.requests)
+    except (OSError, ValueError, csv.Error) as exc:  # owner decision 25: one line, no traceback
+        reason = (str(exc).splitlines() or [type(exc).__name__])[0]
+        print(f"error: cannot read the requests file {args.requests!r}: {reason}", file=sys.stderr)
+        return 2
     try:
         ctx = engine.Context.build(args.intent)
         results = engine.run(requests, ctx)

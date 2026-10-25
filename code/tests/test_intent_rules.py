@@ -141,28 +141,21 @@ class NonDeletionTest(unittest.TestCase):
                 self.assertFalse(r.authorizes_deletion)
                 self.assertEqual(r.request_type, "other")
 
-    # BUG: intent_rules.NEGATION treats "keep using" / "continue using" as a refusal even when the
-    # person says they do NOT want to keep using the service and asks for deletion.
-    @unittest.expectedFailure
+    # Regression: not wanting to keep using the service is no refusal of deletion (owner decision 20).
     def test_not_wanting_to_keep_using_the_service_is_not_a_refusal(self):
         for text in ("Please delete my account. I do not want to keep using the service.",
                      "I do not want to continue using this account, please close it."):
             with self.subTest(text=text):
                 self.assertTrue(classify(text).authorizes_deletion, text)
 
-    # BUG: the Spanish refusal pattern fires on any "no quiero" ("I don't want my account to stay
-    # active"), and the French one on "ne ... pas" followed by a deletion verb within 40 characters
-    # ("I don't wish to keep my account: please delete it").
-    @unittest.expectedFailure
+    # Regression: a negated wish to keep the account (es, fr) is no refusal of deletion (owner decision 20).
     def test_negated_wish_to_keep_the_account_is_not_a_refusal(self):
         for text in ("No quiero que mi cuenta siga activa; por favor eliminen mi cuenta.",
                      "Je ne souhaite pas garder mon compte : merci de le supprimer."):
             with self.subTest(text=text):
                 self.assertTrue(classify(text).authorizes_deletion, text)
 
-    # BUG: classify() ignores deletion wording in any sentence that mentions marketing, so an
-    # account closure asked in the same sentence as a marketing stop is lost.
-    @unittest.expectedFailure
+    # Regression: an account closure asked next to a marketing stop is deletion (owner decision 20).
     def test_account_closure_next_to_marketing_words_is_deletion(self):
         self.assertTrue(classify("Please close my account and stop the marketing emails.").authorizes_deletion)
 

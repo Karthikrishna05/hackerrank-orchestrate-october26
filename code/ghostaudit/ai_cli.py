@@ -1,6 +1,7 @@
 """Fill or inspect the AI caches: `python -m ghostaudit.ai_cli {status,intent,vision}` (run from `code/`).
 
-Exit codes: 0 done (or ready), 1 some items failed, 2 no API key or no network (nothing written).
+Exit codes: 0 done (or ready), 1 some items failed, 2 not ready: no API key or no network (nothing written),
+or OpenRouter refused the key or found no credit (HTTP 401/402; the remaining items are left for the next run).
 """
 
 from __future__ import annotations
@@ -24,6 +25,14 @@ def _not_ready(reason: str) -> int:
     print(f"AI calls unavailable: {reason}. Nothing was written.\n"
           "To enable: set OPENROUTER_API_KEY (never commit it) and allow openrouter.ai in the "
           "environment's network settings.", file=sys.stderr)
+    return NOT_READY
+
+
+def _refused(reason: str) -> int:
+    """Owner decision 27: a bad key or no credit (HTTP 401/402) is "not ready" too."""
+    print(f"AI calls refused: {reason}. The API key is invalid or the account has no credit: check "
+          "OPENROUTER_API_KEY (never commit it) and the OpenRouter account. Items not done are left for "
+          "the next run.", file=sys.stderr)
     return NOT_READY
 
 
@@ -67,6 +76,8 @@ def cmd_intent(args, client: llm.OpenRouterClient) -> int:
     deletion = sum(r.authorizes_deletion for r in results.values())
     print(f"  authorizes deletion: {deletion}; does not: {len(results) - deletion}")
     _compare_with_rules(texts, results)
+    if report.get("stopped_status") in llm.AUTH_STATUS:
+        return _refused(report["stopped"])
     return 1 if report.get("failed") else 0
 
 
@@ -105,6 +116,8 @@ def cmd_vision(args, client: llm.OpenRouterClient) -> int:
                       f"catalog link {c['activity_id']} says {c['link_identifiers']}")
     for fid, err in summary["failed"].items():
         print(f"  {fid}: FAILED {err}")
+    if summary.get("stopped_status") in llm.AUTH_STATUS:
+        return _refused(summary["stopped"])
     return 1 if summary["failed"] else 0
 
 
@@ -122,6 +135,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         return {"status": cmd_status, "intent": cmd_intent, "vision": cmd_vision}[args.command](args, client)
     except llm.LLMError as exc:
+        if exc.status in llm.AUTH_STATUS:
+            return _refused(str(exc))
         return _not_ready(str(exc)) if exc.fatal else 1
 
 
