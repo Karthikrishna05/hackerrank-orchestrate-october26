@@ -1,0 +1,13 @@
+{
+ "cache_key": "85eb1e2219a8ba223c254e113ef82c4892e72c9a766979dd8c536127c4e3cae0",
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "prompt_version": "intent-v1",
+ "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "result": {
+  "authorizes_deletion": true,
+  "confidence": 0.98,
+  "language": "en",
+  "quote": "request to delete this account",
+  "request_type": "deletion"
+ }
+}
