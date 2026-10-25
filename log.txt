@@ -365,3 +365,25 @@ branch=claude/magical-carson-x2agxw
 repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=Claude Code (main session)
+## [2026-10-25T12:02:06Z] Owner approvals for models, engine and AI-client decisions; implement changes
+
+User Prompt (verbatim, secrets redacted):
+added openrouter.ai and the key, continue with the build and every decision must go through me
+
+Agent Response Summary:
+Verified openrouter.ai is now reachable (HTTP 200) but OPENROUTER_API_KEY is not visible in this session and not injected by the proxy (HTTP 401 on the key-status endpoint), so new secrets need a new session. Listed the 20 currently free OpenRouter models and put all choices to the owner: build here and run AI later in a new session; text model google/gemma-4-31b-it:free; vision model nvidia/nemotron-3.5-super-vl:free; weak links only if unique; plus eight engine/AI-client decisions (old-record skip, late-export cites failed activity, backup label = restore risk, NOT_APPLICABLE no-evidence fallback, link-row window, interim link fallback, intent prompt, index bug fix), each backed by data checks. Verified and committed coders E1 (engine: 518 valid deterministic rows; samples at the 165/193 identifier-linked ceiling) and E2 (OpenRouter client, offline-verified), set the chosen model defaults, recorded decisions in engine_plan.md, and launched coder F1 to implement decisions 5, 6, 7 and 12.
+
+Actions:
+* Checked env/proxy for the key without revealing it; fetched OpenRouter public model list
+* AskUserQuestion x3 (12 decisions answered)
+* Edited code/ghostaudit/llm.py (model defaults), code/docs/engine_plan.md; git commits + pushes
+* Agent tool: coder F1 (running)
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=none
+
