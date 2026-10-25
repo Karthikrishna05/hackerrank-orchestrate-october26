@@ -31,8 +31,8 @@ def parse(entry: ManifestEntry, path: Path) -> tuple[list[Observation], list[Cov
     """Observations from the cached vision items; empty with one warning when no cache exists."""
     cache = cache_path(entry.file_id)
     if not cache.is_file():
-        warnings.warn(f"{entry.file_id}: no vision cache at {cache.relative_to(repo_root())}; "
-                      "screenshot not read", ParseWarning)
+        shown = cache.relative_to(repo_root()) if cache.is_relative_to(repo_root()) else cache
+        warnings.warn(f"{entry.file_id}: no vision cache at {shown}; screenshot not read", ParseWarning)
         return [], []
     items = json.loads(cache.read_text(encoding="utf-8"))
     observations = []

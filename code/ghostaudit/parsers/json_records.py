@@ -8,7 +8,7 @@ from pathlib import Path
 
 from ..models import Coverage, ManifestEntry, Observation
 from ..rules import category_for
-from . import (ParseWarning, checked_state, identifiers_of, make_coverage, make_observation,
+from . import (ParseWarning, checked_state, identifiers_of, is_null, make_coverage, make_observation,
                record_state)
 
 HISTORY_COLLECTION = "operational_record_history"  # lookup history, not a full listing
@@ -37,7 +37,7 @@ def _record_obs(entry, rec: dict, source: str, *, collection: str | None, system
         warnings.warn(f"{entry.file_id} {source}: record without resource_id", ParseWarning)
         return None
     category = category_for(collection=collection, record_type=rec.get("record_type"))
-    if "result" in rec:
+    if not is_null(rec.get("result")):
         state = checked_state(str(rec["result"]), f"{entry.file_id} {source}: ")
     else:
         state = record_state(category, rec)

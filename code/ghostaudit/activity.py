@@ -96,7 +96,10 @@ def parse_details(activity: Activity) -> ActivityDetails:
 
 
 def _row_key(a: Activity) -> tuple:
-    return parse_ts(a.event_time), natural_key(a.activity_id)
+    try:
+        return parse_ts(a.event_time), natural_key(a.activity_id)
+    except ValueError as exc:
+        raise ValueError(f"{a.activity_id}: bad event_time: {exc}") from exc
 
 
 class ActivityLog:

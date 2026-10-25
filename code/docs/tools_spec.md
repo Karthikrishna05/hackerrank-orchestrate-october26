@@ -135,7 +135,7 @@ Each parser exposes `parse(entry: ManifestEntry, path) -> (list[Observation], li
 | `index_query_completed` | `result=hit` or `total_hits>0` → FOUND; miss/0 → NOT_FOUND |
 | `analytics_profile_read(_completed)`, `support_ticket_read_completed` | any direct identifier non-null → IDENTIFIABLE, else ANONYMIZED (analytics) / REDACTED (support) |
 | `*_pii_scan`, `analytics_identity_scan` with `matched_value` | IDENTIFIABLE |
-| `message_read` | `message_text="[REDACTED]"` → REDACTED, else IDENTIFIABLE |
+| `message_read` | text carries the `[REDACTED]` marker and no strong identifier remains → REDACTED, else IDENTIFIABLE (cautious: unredacted free text counts as exposed) |
 | `connector_config_read_completed`, `connector_heartbeat`, `connector_config_loaded` | `enabled=true` → ACTIVE, `false` → DISABLED |
 | `restore_policy_read_completed` | `restore_allowed=true` → ACTIVE, `false` → BLOCKED |
 | `restore_candidate_evaluated` | `eligible=true` and `deletion_block=false` → ACTIVE, else BLOCKED |
@@ -157,6 +157,7 @@ Each parser exposes `parse(entry: ManifestEntry, path) -> (list[Observation], li
 - `.state_at(resource_id, cutoff) -> Observation | None`: the latest observation with `observed_at ≤ cutoff`.
 - `.citable(resource_id, cutoff) -> file_id | None`: the latest **manifest** `captured_at ≤ cutoff` among files that mention the resource. None of the 75 gold citations is after audit_at. The "latest file" part is a hypothesis to confirm on the samples.
 - `.coverage(system_id, cutoff)`: lists the files that prove absence by listing a full collection.
+- `.absent_in(resource_id, system_id, cutoff)`: the newest citable listing of the system, but only if it does not mention the resource and no later observation (up to the cutoff) shows the resource present. An older listing never overrides newer evidence.
 - **Accept when:** no observation with `observed_at > cutoff` is ever returned; the `citable()` rule picks the same file as gold for every sample step whose file names the resource.
 
 ### T8 `activity.py`: activity stream tools
@@ -173,7 +174,8 @@ Each parser exposes `parse(entry: ManifestEntry, path) -> (list[Observation], li
   - only allowed operation/state pairs;
   - `NOT_APPLICABLE` → `[]`;
   - `COMPLETE` → verification steps only, each with evidence;
-  - `INCOMPLETE` → findings cite evidence, while remediation and verification use `""`.
+  - `INCOMPLETE` → findings cite evidence, while remediation and verification use `""`;
+  - steps are in canonical order (phase, operation rank, system_id, resource_id), as in all 32 gold rows.
 - `to_json(steps)`: compact separators `(",", ":")`, `ensure_ascii=False`, keys in schema order
   `step_no, phase, system_id, resource_id, operation, state, evidence_id`. The gold uses this
   order in 24 of 32 rows and alphabetical order in the 8 hand-made rows; the grader ignores key order.

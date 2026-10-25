@@ -131,18 +131,16 @@ class ParseLogLineStyleTests(unittest.TestCase):
                               style="pipe")
         self.assertEqual(rec["kv"]["correlation_key"], "user_211")
 
-    # BUG: logs.parse_log_line keeps the leading "| " of the pipe style in the first field
+    # Regression (fixed): logs.parse_log_line keeps the leading "| " of the pipe style in the first field
     # (rest = "| DEBUG | service | ..."), so level is "| DEBUG" on every pipe line
     # (231 lines in evidence_21 and evidence_48). Suggested fix: strip the leading "|" before
     # splitting, e.g. rest.lstrip("| ").split(" | ", 4).
-    @unittest.expectedFailure
     def test_pipe_delimited_line_level(self):
         self.assertLine(PIPE, level="DEBUG")
 
-    # BUG: logs.parse_log_line splits the pipe style with rest.split(" | ") and requires exactly
+    # Regression (fixed): logs.parse_log_line splits the pipe style with rest.split(" | ") and requires exactly
     # 5 parts, so a quoted kv value containing " | " makes the whole line unparseable.
     # Suggested fix: rest.split(" | ", 4).
-    @unittest.expectedFailure
     def test_pipe_line_with_a_pipe_inside_a_quoted_value(self):
         line = ('2026-07-03T07:52:00Z | INFO | support_platform | tr-5156006 | message_read | '
                 'resource_id="support_1" message_text="order A | order B"')
@@ -278,10 +276,9 @@ class EventStateRulesTests(unittest.TestCase):
         self.assertEqual(state_of("message_read", message_text="Write to me at o.kay@example.com"),
                          "IDENTIFIABLE")
 
-    # BUG: logs.EVENT_STATE_RULES["message_read"] uses support_exposed(), which only looks for
+    # Regression (fixed): logs.EVENT_STATE_RULES["message_read"] uses support_exposed(), which only looks for
     # strong identifiers, so an unredacted message naming the customer is reported REDACTED.
     # Spec T6: message_read -> message_text="[REDACTED]" -> REDACTED, else IDENTIFIABLE.
-    @unittest.expectedFailure
     def test_message_read_with_unredacted_text_is_identifiable(self):
         self.assertEqual(state_of("message_read", subject_ref="user_461",
                                   message_text="Hi, this is Ingrid Dahlberg, please call me back"),

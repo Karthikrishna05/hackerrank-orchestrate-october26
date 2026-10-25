@@ -124,10 +124,9 @@ class FlatRecordsEdgeCaseTests(TempJsonMixin, unittest.TestCase):
         self.assertEqual(len(warns), 1)
         self.assertIn("evidence_t2", warns[0])
 
-    # BUG: json_records._record_obs uses `"result" in rec`, so an explicit JSON null result
+    # Regression (fixed): json_records._record_obs uses `"result" in rec`, so an explicit JSON null result
     # becomes UNKNOWN (with a warning) instead of falling back to the derived state, unlike
     # the shared record_state() helper, which ignores an empty result.
-    @unittest.expectedFailure
     def test_null_result_falls_back_to_the_derived_state(self):
         path = self.write({"exported_at": "2026-01-01T00:00:00Z", "records": [
             {"resource_id": "analytics_1", "record_type": "ANALYTICS_PROFILE", "result": None,

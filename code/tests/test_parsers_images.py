@@ -50,11 +50,10 @@ class MissingCacheTests(unittest.TestCase):
         self.assertEqual(len(warns), 1)
         self.assertIn(file_id, warns[0])
 
-    # BUG: images.parse builds its warning with cache.relative_to(repo_root()), which raises
+    # Regression (fixed): images.parse builds its warning with cache.relative_to(repo_root()), which raises
     # ValueError when the cache directory is outside the repository (e.g. a relocated or
     # patched cache_path), so a missing cache crashes instead of warning. Suggested fix:
     # fall back to the absolute path, e.g. use os.path.relpath or a try/except around it.
-    @unittest.expectedFailure
     def test_missing_cache_in_a_relocated_directory_still_only_warns(self):
         with tempfile.TemporaryDirectory() as tmp:
             with mock.patch.object(images, "cache_path", lambda fid: Path(tmp) / f"{fid}.json"):

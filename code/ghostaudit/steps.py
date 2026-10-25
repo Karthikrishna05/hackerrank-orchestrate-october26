@@ -129,6 +129,8 @@ def validate(status: str, steps: Sequence[Step]) -> list[str]:
         errors.append("COMPLETE requires at least one verification step")
     if status == "INCOMPLETE" and not any(s.phase == "FINDING" for s in steps):
         errors.append("INCOMPLETE requires at least one FINDING step")
+    if not errors and list(steps) != sorted(steps, key=_sort_key):
+        errors.append("steps are not in canonical order (phase, operation rank, system_id, resource_id)")
     return errors
 
 

@@ -185,8 +185,15 @@ def _levenshtein(a: Sequence[StepTuple], b: Sequence[StepTuple]) -> int:
     return prev[-1]
 
 
-def score(pred_rows: Cases, gold_rows: Cases) -> Report:
-    """Score predictions over the gold case set; a missing prediction is wrong everywhere."""
+def score(pred_rows: Cases | str | Path, gold_rows: Cases | str | Path) -> Report:
+    """Score predictions over the gold case set; a missing prediction is wrong everywhere.
+
+    Each argument is a parsed `{case_id: (status, steps)}` mapping or a path to an output CSV.
+    """
+    if isinstance(pred_rows, (str, Path)):
+        pred_rows = read_rows(pred_rows)
+    if isinstance(gold_rows, (str, Path)):
+        gold_rows = read_rows(gold_rows)
     steps, steps_ne = PRF(), PRF()
     field_matches = dict.fromkeys(FIELDS, 0)
     positions = status_ok = seq_ok = 0

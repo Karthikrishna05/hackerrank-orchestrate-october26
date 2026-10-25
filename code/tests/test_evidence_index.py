@@ -507,6 +507,29 @@ class AbsentInTest(unittest.TestCase):
         at_cut = cov("evidence_1", "account_service", CUT)
         self.assertEqual(index(coverages=[at_cut]).absent_in("account_1", "account_service", CUT), at_cut)
 
+    def test_an_older_listing_never_overrides_a_newer_listing_that_mentions_the_resource(self):
+        older = cov("evidence_1", "account_service", EARLY)
+        newer = cov("evidence_2", "account_service", BEFORE)
+        idx = index([obs("account_1", file_id="evidence_2", observed_at=BEFORE)], [older, newer])
+        self.assertIsNone(idx.absent_in("account_1", "account_service", CUT))
+
+    def test_none_when_a_later_observation_shows_the_resource_present(self):
+        listing = cov("evidence_1", "account_service", EARLY)
+        later = obs("account_1", file_id="evidence_3", observed_at=BEFORE, state="FOUND")
+        self.assertIsNone(index([later], [listing]).absent_in("account_1", "account_service", CUT))
+
+    def test_a_later_not_found_observation_does_not_block_absence(self):
+        listing = cov("evidence_1", "account_service", EARLY)
+        later = obs("account_1", file_id="evidence_3", observed_at=BEFORE, state="NOT_FOUND")
+        self.assertEqual(index([later], [listing]).absent_in("account_1", "account_service", CUT), listing)
+
+    def test_presence_before_the_listing_or_after_cutoff_does_not_block_absence(self):
+        listing = cov("evidence_1", "account_service", BEFORE)
+        earlier = obs("account_1", file_id="evidence_3", observed_at=EARLY, state="FOUND")
+        future = obs("account_1", file_id="evidence_4", observed_at=AFTER, state="FOUND")
+        idx = index([earlier, future], [listing])
+        self.assertEqual(idx.absent_in("account_1", "account_service", CUT), listing)
+
 
 # --------------------------------------------------------------------------------------------
 # history() / state_at(): sort order and tie-breaks
@@ -545,13 +568,12 @@ class HistoryOrderTest(unittest.TestCase):
             self.assertEqual([o.source for o in idx.history("account_1", CUT)], baseline)
             self.assertEqual(idx.state_at("account_1", CUT).source, baseline[-1])
 
-    # BUG: EvidenceIndex.__init__ sorts ties on (observed_at, captured_at, file_id) by the raw
+    # Regression (fixed): EvidenceIndex.__init__ sorts ties on (observed_at, captured_at, file_id) by the raw
     # `source` string, so within one file `json:records[10]` sorts before `json:records[9]` (and
     # `log:line 10` before `log:line 9`). state_at() then reports the earlier record as the latest,
     # and the natural order the parsers emit (parsers.obs_sort_key) is lost. Suggested fix: use
     # natural_key(source) in the sort key, as is already done for file_id. No real-data impact today
     # (no same-file, same-time state conflicts), so this is low severity.
-    @unittest.expectedFailure
     def test_same_file_same_time_tie_follows_natural_locator_order(self):
         rec9 = obs(file_id="evidence_5", observed_at=EARLY, state="FOUND", source="json:records[9]")
         rec10 = obs(file_id="evidence_5", observed_at=EARLY, state="NOT_FOUND", source="json:records[10]")
@@ -595,11 +617,10 @@ class RobustnessTest(unittest.TestCase):
         self.assertEqual(idx.warnings, [])
         self.assertEqual(idx.citable("account_1", CUT), "evidence_47")
 
-    # BUG: EvidenceIndex.__init__ parses every manifest captured_at with a bare parse_ts(), so one
+    # Regression (fixed): EvidenceIndex.__init__ parses every manifest captured_at with a bare parse_ts(), so one
     # malformed manifest row raises "unparseable timestamp: '...'" without naming the file. The spec
     # (tools_spec.md §1, Errors) requires a clear message with the file_id. Suggested fix: wrap the
     # manifest parse and either raise ValueError(f"{m.file_id}: ...") or record a warning naming it.
-    @unittest.expectedFailure
     def test_malformed_manifest_capture_time_is_reported_with_its_file_id(self):
         manifest = [ManifestEntry("evidence_77", "records/x.json", "test", "not-a-time")]
         try:

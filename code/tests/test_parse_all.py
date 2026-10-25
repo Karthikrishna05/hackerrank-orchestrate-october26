@@ -317,9 +317,8 @@ class RealDatasetAcceptanceTests(unittest.TestCase):
                     leaking.append((entry.file_id, n))
         self.assertEqual(leaking, [])
 
-    # BUG: same as test_parsers_logs.ParseLogLineStyleTests.test_pipe_delimited_line_level:
+    # Regression (fixed): same as test_parsers_logs.ParseLogLineStyleTests.test_pipe_delimited_line_level:
     # pipe-style lines keep the leading "| " in the level ("| DEBUG").
-    @unittest.expectedFailure
     def test_every_parsed_log_level_is_a_plain_level_word(self):
         levels = set()
         for entry in self.log_entries:

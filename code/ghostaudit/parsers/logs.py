@@ -80,7 +80,7 @@ def parse_log_line(line: str) -> dict | None:
         if kv is not None:
             kv.setdefault("event", m.group(4))
         style, level, service, trace = "bracket", m.group(1), m.group(2), m.group(3)
-    elif len(parts := rest.split(" | ")) == 5:
+    elif rest.startswith("| ") and len(parts := rest[2:].split(" | ", 4)) == 5:
         level, service, trace, event, tail = (p.strip() for p in parts)
         kv = _kv(tail)
         if kv is not None:
@@ -154,6 +154,14 @@ def _support(kv: dict) -> str:
     return "IDENTIFIABLE" if support_exposed(kv) else "REDACTED"
 
 
+def _message(kv: dict) -> str:
+    """Redacted only when the text carries the [REDACTED] marker and no identifier remains."""
+    text = kv.get("message_text")
+    if is_null(text):
+        return "UNKNOWN"
+    return "REDACTED" if "[REDACTED]" in str(text) and not support_exposed(kv) else "IDENTIFIABLE"
+
+
 def _flag(field: str, yes: str, no: str):
     def rule(kv: dict) -> str:
         return {True: yes, False: no}.get(truthy(kv.get(field)), "UNKNOWN")
@@ -191,7 +199,7 @@ EVENT_STATE_RULES = {
     "analytics_identity_scan": ("customer_analytics_profiles", _scan("ANONYMIZED")),
     "message_pii_scan": ("support_conversations", _scan("REDACTED")),
     "attachment_pii_scan": ("ticket_attachments", _scan("FOUND")),
-    "message_read": ("support_conversations", _support),
+    "message_read": ("support_conversations", _message),
     "support_ticket_read_completed": ("support_records", _support),
     "connector_config_read_completed": ("connector_configurations", _flag("enabled", "ACTIVE", "DISABLED")),
     "connector_heartbeat": ("connector_configurations", _flag("enabled", "ACTIVE", "DISABLED")),

@@ -199,11 +199,10 @@ class ActivityLogOrderTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             ActivityLog([act("activity_42", "yesterday", INDEX_REFRESH.format("search_1"), resource_id="search_1")])
 
-    # BUG: ActivityLog.__init__ calls parse_ts(event_time) bare, so a malformed row raises
+    # Regression (fixed): ActivityLog.__init__ calls parse_ts(event_time) bare, so a malformed row raises
     # "unparseable timestamp: 'yesterday'" without saying which row. tools_spec.md §1 (Errors)
     # requires a clear message that locates the bad line. Suggested fix: catch ValueError in
     # _row_key / __init__ and re-raise as ValueError(f"{a.activity_id}: unparseable event_time ...").
-    @unittest.expectedFailure
     def test_malformed_event_time_error_names_the_activity(self):
         with self.assertRaises(ValueError) as ctx:
             ActivityLog([act("activity_42", "yesterday", INDEX_REFRESH.format("search_1"), resource_id="search_1")])

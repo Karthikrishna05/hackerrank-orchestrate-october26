@@ -202,8 +202,8 @@ class TestValidateHappyPaths(unittest.TestCase):
 
     def test_activity_and_audit_ids_are_valid_citations(self):
         steps = numbered(make_step("VERIFY_RECORD_ABSENT", "a", "r_1", "activity_4000"),
-                         make_step("VERIFY_RECORD_REDACTED", "b", "r_2", "audit_282"),
-                         make_step("VERIFY_RECORD_PRESENT", "c", "r_3", "evidence_54"))
+                         make_step("VERIFY_RECORD_PRESENT", "c", "r_3", "evidence_54"),
+                         make_step("VERIFY_RECORD_REDACTED", "b", "r_2", "audit_282"))
         self.assertEqual(validate("COMPLETE", steps), [])
 
     def test_incomplete_may_mix_already_compliant_checks_with_blank_evidence(self):
@@ -269,6 +269,16 @@ class TestValidateStatusRules(unittest.TestCase):
 
 
 class TestValidateStepRules(unittest.TestCase):
+    def test_operations_out_of_table_order_are_reported(self):
+        steps = numbered(make_step("VERIFY_RECORD_PRESENT", "security_service", "audit_record_1", "evidence_1"),
+                         make_step("VERIFY_RECORD_ABSENT", "account_service", "account_1", "evidence_1"))
+        self.assertTrue(any("canonical order" in e for e in validate("COMPLETE", steps)))
+
+    def test_same_operation_out_of_system_order_is_reported(self):
+        steps = numbered(make_step("VERIFY_RECORD_ABSENT", "search_service", "search_1", "evidence_1"),
+                         make_step("VERIFY_RECORD_ABSENT", "account_service", "account_1", "evidence_1"))
+        self.assertTrue(any("canonical order" in e for e in validate("COMPLETE", steps)))
+
     def test_operation_with_wrong_state_is_reported(self):
         steps = incomplete_example()
         steps[1] = replace(steps[1], state="DELETED")

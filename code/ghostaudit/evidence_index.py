@@ -61,14 +61,19 @@ class EvidenceIndex:
     def __init__(self, observations: Iterable[Observation], coverages: Iterable[Coverage],
                  manifest: Iterable[ManifestEntry] = ()):
         self.warnings: list[str] = []
-        self._captured = {m.file_id: parse_ts(m.captured_at) for m in manifest}
+        self._captured = {}
+        for m in manifest:
+            try:
+                self._captured[m.file_id] = parse_ts(m.captured_at)
+            except ValueError as exc:
+                raise ValueError(f"{m.file_id}: bad manifest captured_at: {exc}") from exc
         rows = []
         for o in observations:
             try:
                 rows.append((parse_ts(o.observed_at), self._capture_ts(o.file_id, o.captured_at), o))
             except ValueError as exc:
                 self.warnings.append(f"{o.file_id} {o.source}: skipped observation of {o.resource_id}: {exc}")
-        rows.sort(key=lambda r: (r[0], r[1], natural_key(r[2].file_id), r[2].source))
+        rows.sort(key=lambda r: (r[0], r[1], natural_key(r[2].file_id), natural_key(r[2].source)))
         self._obs = [r[2] for r in rows]
         self._obs_ts = [r[0] for r in rows]
         self._cap_ts = [r[1] for r in rows]
@@ -175,13 +180,20 @@ class EvidenceIndex:
         return [c for ts, _, c in self._coverages if c.system_id == system_id and ts <= cut]
 
     def absent_in(self, resource_id: str, system_id: str, cutoff: str) -> Coverage | None:
-        """Newest citable coverage of `system_id` whose file has no observation of the resource."""
+        """The newest citable coverage of `system_id`, if it proves the resource absent.
+
+        Returns None when that listing's file mentions the resource, or when a later observation
+        (up to `cutoff`) shows the resource present: an older listing never overrides newer evidence.
+        """
         cut = parse_ts(cutoff)
-        present = {self._obs[i].file_id for i in self._by_resource.get(resource_id, ())}
-        for ts, cap, c in self._coverages:
-            if c.system_id == system_id and ts <= cut and cap <= cut and c.file_id not in present:
-                return c
-        return None
+        mentions = self._by_resource.get(resource_id, ())
+        newest = next(((ts, c) for ts, cap, c in self._coverages
+                       if c.system_id == system_id and ts <= cut and cap <= cut), None)
+        if newest is None or any(self._obs[i].file_id == newest[1].file_id for i in mentions):
+            return None
+        seen_later = any(newest[0] < self._obs_ts[i] <= cut and self._obs[i].state != "NOT_FOUND"
+                         for i in mentions)
+        return None if seen_later else newest[1]
 
     def in_file(self, file_id: str) -> list[Observation]:
         """Every observation from one evidence file, in history order."""
