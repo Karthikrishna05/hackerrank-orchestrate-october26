@@ -323,3 +323,10 @@ From 2026-10-25 every design decision is approved by the project owner before it
 | 29 | Fallback models | Text: `google/gemma-4-31b-it:free` → `nvidia/nemotron-3-super-120b-a12b:free`. Vision: `nvidia/nemotron-3.5-super-vl:free` → `google/gemma-4-31b-it:free` |
 | 30 | Attempt budget | Main model: first try + 3 retries with growing waits; then the fallback gets the same 4 tries; 8 at most, then the item is left for the next run, never guessed |
 | 31 | Fallback trigger | Rate limits (429) and outages (5xx, or the model being unavailable) switch to the fallback after the main model's tries; 401/402 stay fatal |
+| 32 | "Restore: Yes" | → ACTIVE (restore risk), same as "Restore allowed" |
+| 33 | Attempt count | 8 retryable attempts (4 + 4), plus the existing single invalid-JSON retry and single no-JSON-mode retry: at most 10 requests per batch |
+| 34 | Long Retry-After | If the main model's wait would exceed the wait budget, switch straight to the fallback model instead of ending the call |
+| 35 | Both models failed | Stop the whole run when both models are exhausted for any retryable reason; finished batches stay cached and a rerun continues |
+| 36 | "No endpoints … parameters" | Retry once without JSON mode (`response_format`) instead of repeating the same request |
+| 37 | `ai_cli status` | Also prints the two fallback models |
+| — | Past-restore labels | Rejected: "Last restore: <date>" / "Restored · Completed" stay UNKNOWN under decision 17 |
