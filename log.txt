@@ -323,3 +323,25 @@ repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=none
 
+
+## [2026-10-25T11:47:23Z] Sub-agent E2: OpenRouter AI client (intent, vision, CLI)
+
+User Prompt (verbatim, secrets redacted):
+Parent agent delegated: build llm.py, intent_llm.py, vision.py, ai_cli.py using free OpenRouter models per code/docs/engine_plan.md (offline-verified; no real calls possible yet).
+
+Agent Response Summary:
+Built a stdlib-only OpenRouter client (retries with Retry-After and a 60 s wait cap, defensive JSON parsing, one validation retry, per-attempt usage log without prompt text or key), the batched and cached A1 intent classifier with a versioned prompt and 8 synthetic few-shot examples, the A2 screenshot reader (raw transcription by the model, then deterministic label-to-state tables, resource-id validation, catalog-alias resolution and a link-row cross-check that flags conflicts), and the ai_cli status/intent/vision commands. No real model calls were made: OPENROUTER_API_KEY is unset (openrouter.ai now answers HTTP 200 through the proxy). The logic was verified offline against a throwaway local fake server with synthetic replies; nothing was written to code/cache/.
+
+Actions:
+* Created code/ghostaudit/llm.py, intent_llm.py, vision.py, ai_cli.py
+* Ran python -m ghostaudit.ai_cli status/intent/vision without a key: exit 2, nothing written
+* Ran 30 offline checks (fake 127.0.0.1 server, dummy key in the scratch process only, temp cache dir): 30/30 pass; in-process CLI run against the fake server also passed
+* Ran python3 -m unittest discover -s code/tests -t code: 770 tests OK; git status shows no code/cache files
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=Claude Code (main session)

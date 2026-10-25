@@ -132,8 +132,8 @@ the Python standard library (`urllib`), so there is no SDK dependency.
 | Setting | Environment variable | Default |
 |---|---|---|
 | API key (required for AI runs) | `OPENROUTER_API_KEY` | none. It is never logged and never written to disk |
-| Text model (A1, A3) | `OPENROUTER_TEXT_MODEL` | `openrouter/free` |
-| Vision model (A2) | `OPENROUTER_VISION_MODEL` | `openrouter/free` |
+| Text model (A1, A3) | `OPENROUTER_TEXT_MODEL` | `google/gemma-4-31b-it:free` (owner's choice) |
+| Vision model (A2) | `OPENROUTER_VISION_MODEL` | `nvidia/nemotron-3.5-super-vl:free` (owner's choice) |
 
 - **About `openrouter/free`:** OpenRouter's Free Models Router (released Feb 2026; text and
   image input) picks a free model **at random** among those supporting the request's needs. So:
@@ -278,11 +278,13 @@ The API key is read only from `OPENROUTER_API_KEY` and is never logged.
 | E5 | Tests (unit, metamorphic, no-hard-coding) and cleanup | Full suite green; fingerprint-style before/after check |
 
 ## 8. Decisions and prerequisites
-1. **Free models via OpenRouter** (decided). Defaults to `openrouter/free`; specific `:free`
-   models can be pinned through environment variables.
-2. **Network access:** this environment's network policy currently blocks `openrouter.ai`. It
-   must be added under Allowed domains in the environment's Network access settings.
-3. **API key:** add `OPENROUTER_API_KEY` in the environment settings (Network secrets, or an
-   environment variable). It must never be pasted into chat or committed.
-4. **Identifier-free records:** abstain unless unambiguous (the default, since no other choice
-   was given).
+
+From 2026-10-25 every design decision is approved by the project owner before it is applied.
+
+1. **Free models via OpenRouter** (owner decision): pinned `google/gemma-4-31b-it:free` for intent and
+   `nvidia/nemotron-3.5-super-vl:free` for screenshots. Both were confirmed free and image-capable in
+   OpenRouter's model list on 2026-10-25. `openrouter/free` stays available as an override.
+2. **Network access:** `openrouter.ai` is allowed (done by the owner; verified HTTP 200).
+3. **API key:** added by the owner. It reaches new sessions only, so (owner decision) the engine,
+   tests and cleanup are built in this session, and the AI steps run later in a new session on this branch.
+4. **Identifier-free records** (owner decision): add a record only when it is the single consistent candidate.
