@@ -198,3 +198,24 @@ branch=claude/magical-carson-x2agxw
 repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=Claude Code (main session)
+
+## [2026-10-25T10:56:21Z] Sub-agent T2: unit tests for evidence parsers
+
+User Prompt (verbatim, secrets redacted):
+Parent agent delegated: write independent unittest suites for the T6 evidence parsers (SQL, JSON, logs, text, PDF backends, images, parse_all) per code/docs/tools_spec.md.
+
+Agent Response Summary:
+Wrote 7 stdlib unittest modules (297 tests) plus 13 small synthetic fixtures covering every SQL/JSON/log/text family, all EVENT_STATE_RULES rows, the trace join, the three PDF backends (with mocked missing backends), the vision-cache reader and the T6 real-data acceptance checks. The parser suite passes in about 2.3 s with 6 expected failures that document 5 bugs: pipe-style log level keeps a leading "| " (all 231 real pipe lines), a pipe inside a quoted value makes a pipe line unparseable, message_read classes unredacted text without strong identifiers as REDACTED (spec says IDENTIFIABLE), a JSON null result becomes UNKNOWN instead of the derived state, and the image parser's missing-cache warning raises ValueError when the cache dir is outside the repo. No product code was edited.
+
+Actions:
+* Created code/tests/test_parsers_sql.py, test_parsers_json.py, test_parsers_logs.py, test_parsers_text.py, test_parsers_pdf.py, test_parsers_images.py, test_parse_all.py
+* Created fixtures in code/tests/fixtures/parsers/ (5 .sql, 5 .json, 2 .log, 1 .txt)
+* Ran python3 -m unittest discover -s code/tests -t code -p "test_parse*.py" (297 tests, OK, 6 expected failures) and the full suite (764 tests, OK, 10 expected failures)
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=Claude Code (main session)
