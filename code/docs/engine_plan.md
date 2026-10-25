@@ -300,3 +300,6 @@ From 2026-10-25 every design decision is approved by the project owner before it
 | 10 | Interim screenshots | Until the vision cache is filled, a record with only a link row is assumed present and cites the link row's `activity_id` |
 | 11 | Intent prompt | The E2 prompt (`intent-v1`) is approved as built |
 | 12 | Index bug | `EvidenceIndex.for_subject` must ignore blank resource IDs; fix it with a regression test |
+| 13 | Scope of decision 6 | Records only (DELETE/REDACT/ANONYMIZE kinds); data flows and backups are not covered |
+| 14 | Activity rows for decision 6 | Only rows whose `resource_id` column is the record; text mentions do not count |
+| 15 | Link check for decision 5 | Only link rows naming this case's subject keep an old record in the case |
