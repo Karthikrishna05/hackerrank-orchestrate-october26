@@ -1,0 +1,13 @@
+{
+ "cache_key": "4db8d5add0f2be659a623dba8b6c395b872852657bb2fd866babfccad7e59a09",
+ "model": "google/gemma-4-31b-it:free",
+ "prompt_version": "intent-v1",
+ "requested_model": "google/gemma-4-31b-it:free",
+ "result": {
+  "authorizes_deletion": true,
+  "confidence": 1.0,
+  "language": "en",
+  "quote": "close my account and process the associated personal-data deletion",
+  "request_type": "deletion"
+ }
+}

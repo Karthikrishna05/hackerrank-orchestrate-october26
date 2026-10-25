@@ -1,0 +1,13 @@
+{
+ "cache_key": "519765b04f059e5e827ec7c65c6b9cced2b695acaa4f37348f4d9e03634c1ef8",
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "prompt_version": "intent-v1",
+ "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "result": {
+  "authorizes_deletion": true,
+  "confidence": 0.98,
+  "language": "ko",
+  "quote": "영구 삭제를 요청합니다",
+  "request_type": "deletion"
+ }
+}
