@@ -410,3 +410,44 @@ branch=claude/magical-carson-x2agxw
 repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=Claude Code (main session)
+
+## [2026-10-25T12:25:21Z] Sub-agent T5: tests for OpenRouter client, intent, vision, AI CLI
+
+User Prompt (verbatim, secrets redacted):
+Parent agent delegated: write independent unittest suites for llm.py, intent_llm.py, vision.py and ai_cli.py using a local fake server and temp caches (no real API calls).
+
+Agent Response Summary:
+Wrote 131 stdlib unittest tests across four files, using a local fake OpenRouter HTTP server on 127.0.0.1, a dummy key set only inside tests, injected sleeps and temp cache roots (both llm.cache_root and parsers.images.cache_path are patched, because the vision cache path does not derive from llm.cache_root). All pass except one expectedFailure marking a real bug: a persistent 429 with "Retry-After: 0" makes chat_json retry forever, because zero delays never spend the wait budget and there is no attempt cap. The full suite (1021 tests) passes with 9 expected failures, and code/cache/ was never created; each module ends with a guard test that checks this. Unsettled behaviours (backup restore labels it cannot read, precedence between conflicting labels, the exit code for an invalid key) are left untested and listed for the owner. No product code was edited.
+
+Actions:
+* Created code/tests/test_llm.py (49 tests plus the shared FakeOpenRouter, env and temp-cache helpers)
+* Created code/tests/test_intent_llm.py (26), code/tests/test_vision.py (46), code/tests/test_ai_cli.py (10, run in-process plus a subprocess smoke test of the entry point)
+* Ran each file, 3 reruns for determinism, and the full suite: python3 -m unittest discover -s code/tests -t code
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=Claude Code (main session)
+
+## [2026-10-25T12:25:41Z] Sub-agent T4: tests for engine, intent rules, CLI
+
+User Prompt (verbatim, secrets redacted):
+Parent agent delegated: write independent unittest suites for engine.py, intent_rules.py and code/main.py, testing owner decisions 1-15 per code/docs/engine_plan.md.
+
+Agent Response Summary:
+Wrote three stdlib unittest files (119 tests): synthetic in-memory Contexts for the engine (owner decisions 5, 6, 8, 9, 10, 13, 14, 15, ghost copies, category hints, retention, tombstones, metamorphic after-audit and determinism checks), keyword intent tests in six languages, real-data checks, CLI subprocess tests into temp dirs and a no-hard-coding guard. No product code was edited; 8 behaviours that contradict the spec or owner decisions are marked expectedFailure with BUG comments (5 engine, 3 intent_rules). Full suite: 1021 tests OK with 9 expected failures; the repository output.csv was left unchanged.
+
+Actions:
+* Created code/tests/test_intent_rules.py (20 tests), code/tests/test_engine.py (90 tests), code/tests/test_main_cli.py (9 tests)
+* Ran python3 -m unittest discover -s code/tests -t code -p "test_<name>.py" -v for each file, then the full suite
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=Claude Code (main session)
