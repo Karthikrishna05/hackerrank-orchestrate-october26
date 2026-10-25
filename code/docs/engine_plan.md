@@ -303,3 +303,23 @@ From 2026-10-25 every design decision is approved by the project owner before it
 | 13 | Scope of decision 6 | Records only (DELETE/REDACT/ANONYMIZE kinds); data flows and backups are not covered |
 | 14 | Activity rows for decision 6 | Only rows whose `resource_id` column is the record; text mentions do not count |
 | 15 | Link check for decision 5 | Only link rows naming this case's subject keep an old record in the case |
+
+### Owner decisions after the second test round (2026-10-25)
+| # | Topic | Decision |
+|---|---|---|
+| 16 | Retry safety | Every wait is at least the growing backoff (2 s, 4 s, 8 s …), even if `Retry-After` is 0 or in the past, and attempts are capped (see 30) |
+| 17 | Unrecognised backup labels | Clear refusals ("No", "Disallowed", "Not allowed") → BLOCKED; unclear labels ("Unavailable", "Pending approval", anything else) → UNKNOWN, with an accurate reason |
+| 18 | Conflicting labels on one record | The risky state wins (ACTIVE over DISABLED/BLOCKED, FOUND over NOT_FOUND), with a conflict note |
+| 19 | "Not enabled" connector | → DISABLED |
+| 20 | Test writer 4's bugs | Fix all five: citations must show the decided state; an email owned by two users → safest row with a note; a tombstone still showing a name is exposed; a retained link-only record cites its link row; keyword-intent false refusals and lost closures fixed |
+| 21 | Ghost copies | Same file only (as built) |
+| 22 | Decision 6 with a link row | If there is no failed/partial attempt row but a subject link row lies in the window, the finding cites the link row |
+| 23 | Late absence | Cite the newest pre-audit listing (`absent_in`); if none, drop the check with a note |
+| 24 | Identity changes after `audit_at` | Keep all (as built) |
+| 25 | Missing input file | `main.py` prints a one-line error and exits non-zero (no traceback) |
+| 26 | Intent cache keys | `engine.text_key` strips the text exactly like `intent_llm.cache_key` |
+| 27 | Bad key or no credit | `ai_cli` exits 2 on 401/402, like "no key / no network" |
+| 28 | Missing model name | Record the requested model when a response omits `model` |
+| 29 | Fallback models | Text: `google/gemma-4-31b-it:free` → `nvidia/nemotron-3-super-120b-a12b:free`. Vision: `nvidia/nemotron-3.5-super-vl:free` → `google/gemma-4-31b-it:free` |
+| 30 | Attempt budget | Main model: first try + 3 retries with growing waits; then the fallback gets the same 4 tries; 8 at most, then the item is left for the next run, never guessed |
+| 31 | Fallback trigger | Rate limits (429) and outages (5xx, or the model being unavailable) switch to the fallback after the main model's tries; 401/402 stay fatal |
