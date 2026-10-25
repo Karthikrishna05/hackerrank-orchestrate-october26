@@ -1,0 +1,11 @@
+CUSTOMER PLATFORM - SHIFT HANDOVER
+Snapshot: 2026-10-01T12:00:00Z
+
+Account and downstream checks completed during the shift:
+
+- 2026-10-01T12:00:00Z | account_service | account_1810 | USER_PROFILE | NOT_FOUND | CHOI.JIWOO94@EXAMPLE.COM
+- 2026-10-01T11:30:00Z | analytics_platform | analytics_6830 | ANALYTICS_PROFILE | ANONYMIZED | no direct identifier
+- 2026-10-01T12:00:00Z | backup_service | backup_706 | BACKUP_ARCHIVE | BLOCKED | user_39
+- 2026-10-01T12:00:00Z | integration_service | data_flow_9522 | DATA_FLOW | ACTIVE | +81 90 7610 0000
+
+Next shift: confirm the replica rebuild.

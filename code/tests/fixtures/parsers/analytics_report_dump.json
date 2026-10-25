@@ -1,0 +1,9 @@
+{
+  "captured_at": "2026-09-07T09:45:00Z",
+  "source": "analytics_identity_store",
+  "collection": "customer_analytics_reports",
+  "records": [
+    {"resource_id": "analytics_901", "user_id": null, "email": null, "phone": null, "email_hash": null, "reporting_window": "last_90_days", "metrics": {"sessions_30d": 11}},
+    {"resource_id": "analytics_824", "user_id": "user_824", "email": "f.dahlen@example.com", "phone": "+46 70 226 00 84", "email_hash": "d61fb631b92c3bac651984c5cca965640b4a854f1619c2be08e8e2751ed4257b", "reporting_window": "last_90_days", "metrics": {"sessions_30d": 6}}
+  ]
+}

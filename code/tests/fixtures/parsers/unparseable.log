@@ -1,0 +1,4 @@
+2026-09-15T08:51:43Z level=DEBUG service=log_router instance=collector-3 event=export_started sources=platform_services
+this line has no timestamp at all
+2026-09-15T08:51:44Z level=INFO service=search_service trace_id=tr-9 event=mystery_event resource_id=search_1
+2026-09-15T08:51:45Z level=INFO service=search_service trace_id=tr-9 event=index_query_completed result=hit

@@ -1,0 +1,10 @@
+2026-09-15T08:51:43Z level=DEBUG service=log_router instance=collector-3 event=export_started sources=platform_services expected_source_events=6
+2026-09-15T08:51:45Z level=DEBUG service=search_service instance=search-2 pod=search-12cc region=ap-south-1 trace_id=tr-1000001 event=index_query_started match_key="G.SILVANO@EXAMPLE.COM" attempt=1
+2026-09-15T08:51:46Z level=DEBUG service=account_service instance=account-1 pod=account-0410 region=ap-south-1 trace_id=tr-1000002 event=profile_lookup_started lookup_key="+44 7700 900123" attempt=1
+2026-09-15T08:51:47Z level=DEBUG service=search_service instance=search-2 pod=search-12cc region=ap-south-1 trace_id=tr-1000001 event=connection_acquired pool=search_service_replica wait_ms=56
+2026-09-15T08:51:48Z level=INFO service=account_service instance=account-1 pod=account-0410 region=ap-south-1 trace_id=tr-1000002 resource_id=account_7023 event=profile_lookup_completed rows=0 http_status=404 duration_ms=44
+
+2026-09-15T08:51:49Z level=WARN service=search_service instance=search-2 pod=search-12cc region=ap-south-1 trace_id=tr-1000001 event=dependency_retry dependency=search_service_store attempt=1 retry_in_ms=474 reason=read_timeout
+2026-09-15T08:51:50Z level=INFO service=search_service instance=search-2 pod=search-12cc region=ap-south-1 trace_id=tr-1000001 resource_id=search_1874 event=index_query_completed index=customer_directory_v3 result=hit shard=2 took_ms=17
+2026-09-15T08:51:52Z level=DEBUG service=analytics_platform instance=analytics-2 pod=analytics-9b40 region=ap-south-1 trace_id=tr-1000003 resource_id=analytics_9914 event=contact_lookup_completed rows=1 email_opt_in=true correlation_key="9d58794f0080fd7d4891524495324132c9dc4f22bcd642f9fe7916a4ecc50fe9"
+2026-09-15T08:51:55Z level=INFO service=log_router instance=collector-3 event=export_completed source_events=6 auxiliary_events=2

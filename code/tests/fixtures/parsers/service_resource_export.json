@@ -1,0 +1,50 @@
+{
+  "exported_at": "2026-01-29T11:44:59Z",
+  "region": "global",
+  "source": "records_assurance_gateway",
+  "service_exports": {
+    "account_service": {
+      "profile_lookups": [
+        {"observed_at": "2026-01-29T09:08:49Z", "profile": {"customer_reference": null, "email": "A.RAO@EXAMPLE.COM", "email_hash": null, "full_name": null, "phone": null}, "resource_id": "account_2424", "status_code": 200},
+        {"observed_at": "2026-01-29T09:10:00Z", "profile": null, "resource_id": "account_2425", "status_code": 404}
+      ]
+    },
+    "search_service": {
+      "index_queries": [
+        {"hits": {"documents": [{"customer_reference": null, "display_name": null, "email": "j.lund@example.com", "email_hash": null, "phone": null, "resource_id": "search_1091"}], "total": 1}, "observed_at": "2026-01-29T11:40:30Z", "query": "j.lund@example.com", "resource_id": "search_1091"},
+        {"hits": {"documents": [], "total": 0}, "observed_at": "2026-01-29T11:41:30Z", "query": "a.rao@example.com", "resource_id": "search_1092"}
+      ]
+    },
+    "analytics_platform": {
+      "profiles": [
+        {"audience_cohort": "returning_customer", "customer_reference": null, "email": "h.chevrier@example.com", "email_hash": null, "observed_at": "2026-01-29T09:19:08Z", "phone": null, "resource_id": "analytics_131"},
+        {"audience_cohort": "returning_customer", "customer_reference": null, "email": null, "email_hash": null, "observed_at": "2026-01-29T09:20:08Z", "phone": null, "resource_id": "analytics_132"}
+      ]
+    },
+    "integration_service": {
+      "connectors": [
+        {"connector_name": "customer_events_connector", "customer_email": "h.chevrier@example.com", "customer_reference": null, "enabled": false, "last_delivery_status": "paused", "observed_at": "2026-01-29T09:02:41Z", "resource_id": "data_flow_2263"}
+      ]
+    },
+    "backup_service": {
+      "restore_entries": [
+        {"archive_key": "archive/customer-data/backup_3382.tar.zst", "customer_email": "k.amponsa@example.com", "customer_reference": null, "observed_at": "2026-01-29T11:39:19Z", "resource_id": "backup_3382", "restore_allowed": true}
+      ]
+    },
+    "support_platform": {
+      "tickets": [
+        {"customer_reference": null, "message_excerpt": "Customer contacted support about account access.", "observed_at": "2026-01-29T10:19:28Z", "requester_email": null, "requester_name": null, "requester_phone": null, "resource_id": "support_1191"}
+      ]
+    },
+    "security_service": {
+      "audit_records": [
+        {"event_code": "SUBJECT_REQUEST_AUDITED", "observed_at": "2026-01-29T11:09:44Z", "resource_id": "audit_record_2152", "retention_until": "2033-12-31T23:59:59Z", "subject_reference": "user_528"}
+      ]
+    },
+    "export_service": {
+      "exports": [
+        {"customer_reference": null, "object_key": "exports/export_9388/customer_data.zip", "observed_at": "2026-01-29T10:50:38Z", "owner_email": "n.zielna@example.com", "owner_phone": null, "resource_id": "export_9388"}
+      ]
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "exported_at": "2026-09-15T12:00:00Z",
+  "source": "records_assurance_service",
+  "snapshots": [
+    {"captured_at": "2026-09-09T12:00:00Z", "data_store": "search_service", "collection": "customer_search_documents", "records": [
+      {"resource_id": "search_2228", "index_name": "customer_directory_v3", "document": {"display_name": "Camila Oliva", "email": "C.OLIVA@EXAMPLE.COM", "customer_reference": "user_908"}}
+    ]},
+    {"captured_at": "2026-09-15T12:00:00Z", "data_store": "account_service", "collection": "customer_profiles", "records": []},
+    {"captured_at": "2026-09-15T11:00:00Z", "data_store": "identity_service", "collection": "deleted_customer_references", "records": [
+      {"resource_id": "tombstone_440", "subject_reference": "user_908", "name": null, "email": null, "phone": null, "email_hash": null, "account_status": "DELETED"}
+    ]},
+    {"captured_at": "2026-09-15T12:00:00Z", "data_store": "backup_restore_service", "collection": "operational_record_history", "records": [
+      {"recorded_at": "2026-09-02T09:00:00Z", "system": "account_service", "resource_id": "account_9031", "record_type": "USER_PROFILE", "result": "FOUND", "lookup_value": "S.WALKER@EXAMPLE.COM"},
+      {"recorded_at": "2026-09-08T09:00:00Z", "system": "search_service", "resource_id": "search_9252", "record_type": "SEARCH_INDEX_ENTRY", "result": "NOT_FOUND", "lookup_value": "s.walker@example.com"}
+    ]}
+  ]
+}
