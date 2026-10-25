@@ -160,13 +160,15 @@ def map_state(category: str | None, rec: dict, strong: set[str]) -> tuple[str, s
                     return state, f"label {label!r} -> {state}"
         return "UNKNOWN", f"no rule for labels {labels}"
     if category == "BACKUP_ARCHIVE":
+        # A restore label that blocks or disallows restore -> BLOCKED; one that allows it -> ACTIVE.
+        # Owner decision 7: an archive listed with no restore label is a restore risk -> ACTIVE.
         restore = [(f["name"], f["value"]) for f in rec["fields"] if "restor" in f["name"].casefold()]
         restore += [("", s) for s in rec["statuses"] if "restor" in s.casefold()]
         found = {s for s in (_restore_state(n, v) for n, v in restore) if s}
         for state in ("BLOCKED", "ACTIVE"):
             if state in found:
                 return state, f"restore label -> {state}"
-        return "FOUND", "archive listed -> FOUND"
+        return "ACTIVE", "archive listed, no restore label -> ACTIVE"
     if category in EXPOSURE_CATEGORIES:
         exposed = {t for t in strong if not (category == "ACCOUNT_TOMBSTONE" and t.startswith("user_"))}
         if exposed or (category == "ACCOUNT_TOMBSTONE" and rec["names"]):

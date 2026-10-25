@@ -331,6 +331,16 @@ class ForSubjectTest(unittest.TestCase):
             ("evidence_04", "support_5", "ref"): "field_reference",
         })
 
+    # Regression (owner decision 12): document observations share the blank resource id "", which
+    # used to pull every document in through a resource_link hop.
+    def test_blank_resource_id_is_never_a_matched_resource(self):
+        mine = obs("", file_id="evidence_01", identifiers={SUBJECT_EMAIL}, system_id="docs", source="mine")
+        unrelated = obs("", file_id="evidence_02", identifiers={OTHER_EMAIL}, system_id="docs", source="unrelated")
+        idx = index([mine, unrelated])
+        self.assertEqual(idx.for_subject(profile(), CUT), [SubjectMatch(mine, "identifier")])
+        self.assertEqual(idx.for_subject(profile(), CUT, extra_links={"": {SUBJECT_EMAIL}}),
+                         [SubjectMatch(mine, "identifier")])
+
     def test_extra_link_marks_a_resource_as_matched(self):
         archive = obs("backup_7", source="archive row")
         result = index([archive]).for_subject(profile(), CUT, extra_links={"backup_7": {SUBJECT_EMAIL, "user_99"}})

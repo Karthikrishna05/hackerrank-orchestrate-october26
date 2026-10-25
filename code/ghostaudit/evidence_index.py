@@ -126,9 +126,11 @@ class EvidenceIndex:
             for i in self._by_token.get(token, ()):
                 if self._visible(i, cut, strict):
                     reasons[i] = "identifier"
-                    direct.add(self._obs[i].resource_id)
+                    # Owner decision 12: "" is shared by every document observation, so it is no resource.
+                    if self._obs[i].resource_id:
+                        direct.add(self._obs[i].resource_id)
         extra = {rid for rid, tokens in (extra_links or {}).items()
-                 if {t.strip().lower() for t in tokens} & strong} - direct
+                 if rid and {t.strip().lower() for t in tokens} & strong} - direct
         for rids, reason in ((direct, "resource_link"), (extra, "extra_link")):
             for rid in sorted(rids):
                 for i in self._by_resource.get(rid, ()):

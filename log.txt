@@ -387,3 +387,26 @@ repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=none
 
+
+## [2026-10-25T12:07:03Z] Sub-agent F1: implement owner decisions 5, 6, 7, 12
+
+User Prompt (verbatim, secrets redacted):
+Parent agent delegated: implement owner-approved decisions 5 (old records), 6 (late export cites activity), 7 (backup label = restore risk), 12 (blank resource id bug + regression test) per code/docs/engine_plan.md.
+
+Agent Response Summary:
+Implemented exactly the four owner decisions. Decision 5 skips an already-deleted record (state NOT_FOUND) when all its observations predate requested_at and it has no subject link row inside [requested_at, audit_at] (note earlier_request_record). Decision 6 cites the latest FAILED/PARTIAL activity row for a record seen present only in a file captured after audit_at (note late_export_cited_activity), keeping the old drop otherwise. Decision 7 maps a backup listed with no restore label to ACTIVE in vision.map_state; decision 12 stops for_subject from treating a blank resource id as matched, with a regression test. Only output.csv row case_126 changed (COMPLETE -> INCOMPLETE, finding account_8819 citing activity_3114); sample step precision rose to 100% (165/165) with recall unchanged at 165/193.
+
+Actions:
+* Edited code/ghostaudit/engine.py (audit_case, new _unsuccessful_attempt, UNSUCCESSFUL_RESULTS)
+* Edited code/ghostaudit/vision.py (map_state backup branch and comment)
+* Edited code/ghostaudit/evidence_index.py (EvidenceIndex.for_subject)
+* Added regression test to code/tests/test_evidence_index.py (771 tests pass)
+* Ran python3 code/main.py --intent rules twice (same sha256), diffed output.csv, ran sample run + ghostaudit.scorer
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=Claude Code (main session)

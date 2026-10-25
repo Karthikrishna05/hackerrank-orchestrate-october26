@@ -108,6 +108,9 @@ PRESENT_STATE = {"DELETE": "FOUND", "REDACT": "IDENTIFIABLE", "ANONYMIZE": "IDEN
 # The only valid row that needs no citation; used when a deletion case has nothing usable.
 SAFEST_ROW = NOT_APPLICABLE
 
+# S6: reported results of a deletion attempt that did not succeed (owner decision 6).
+UNSUCCESSFUL_RESULTS = frozenset({"FAILED", "PARTIAL"})
+
 
 # ---------------------------------------------------------------- results and context
 
@@ -401,6 +404,13 @@ def _citation(res: _Resource, ctx: Context, audit: str, absent: bool) -> str:
     return ""
 
 
+def _unsuccessful_attempt(rid: str, ctx: Context, audit: str) -> str:
+    """Latest activity row for `rid` at or before audit_at reported FAILED or PARTIAL, else ""."""
+    rows = [a for a in ctx.activity.for_resources(rid, until=audit)
+            if a.resource_id == rid and a.reported_result in UNSUCCESSFUL_RESULTS]
+    return rows[-1].activity_id if rows else ""
+
+
 def _safest(case_id: str, intent: IntentResult, notes: list[str], reason: str) -> CaseResult:
     notes.append(f"safest_row: {reason}")
     status, steps = SAFEST_ROW
@@ -426,6 +436,7 @@ def audit_case(request: Request, ctx: Context) -> CaseResult:
                           request.case_id, intent)
 
     plans = []
+    requested = parse_ts(request.requested_at)
     for res in resources:
         category = _category(res, notes)
         kind = category if category in (DATA_FLOW, "BACKUP_ARCHIVE") else ctx.policy.action(category)
@@ -438,12 +449,25 @@ def audit_case(request: Request, ctx: Context) -> CaseResult:
         state = _planner_state(kind, category, current, res, notes)
         if state is None:
             continue
+        # Owner decision 5: gone, with all evidence older than this request and no link row in its window
+        # (res.link is only set inside [requested_at, audit_at]): it belongs to an earlier request.
+        if state == "NOT_FOUND" and res.link is None and all(
+                parse_ts(o.observed_at) < requested for o in res.history):
+            notes.append(f"earlier_request_record: {res.rid} absent, all evidence before requested_at; skipped")
+            continue
         finding = MATRIX[(kind, state)][0] is not None
         evidence = _citation(res, ctx, audit, absent=state == "NOT_FOUND")
         if finding and not evidence:
             if current is None and res.link is not None:
                 evidence = res.link.activity_id
-            else:
+            elif current is not None and kind not in (DATA_FLOW, "BACKUP_ARCHIVE"):
+                # Owner decision 6: a record seen present by audit_at only in a file captured later
+                # cites the workflow's own failed or partial deletion attempt, never the late file.
+                evidence = _unsuccessful_attempt(res.rid, ctx, audit)
+                if evidence:
+                    notes.append(f"late_export_cited_activity: {res.rid} {state} seen only in a file captured "
+                                 f"after audit_at; citing {evidence}")
+            if not evidence:
                 notes.append(f"uncitable_finding: {res.rid} {state} has no evidence captured by audit_at; skipped")
                 continue
         plans.append(plan(res.system_id, res.rid, kind, state, evidence))
