@@ -700,3 +700,22 @@ repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=none
 
+## [2026-10-25T15:26:28Z] Prepare likely AI-interview questions with answer points
+
+User Prompt (verbatim, secrets redacted):
+what and all are the possible interview ques for this?
+
+Agent Response Summary:
+Listed likely AI-interview questions grouped by the interview topics in AGENTS.md (architecture, investigation approach, remediation planning, evaluation) plus AI usage, generalisation, process and tough critical questions, each with short answer points drawn from verified project facts (metrics, data findings, owner decisions, known limitations).
+
+Actions:
+* None beyond this log entry (answer given in chat)
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=none
+
