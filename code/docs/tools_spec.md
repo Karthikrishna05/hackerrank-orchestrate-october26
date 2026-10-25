@@ -9,7 +9,7 @@ screenshot reading, ambiguous category judgement) come later and plug into these
 
 | Rule | Detail |
 |---|---|
-| Language | Python 3.13, standard library only (`csv`, `json`, `sqlite3`, `hashlib`, `re`, `datetime`, `subprocess`). External binary: `pdftotext` (poppler) for PDFs only. |
+| Language | Python 3.13, standard library (`csv`, `json`, `sqlite3`, `hashlib`, `re`, `datetime`, `subprocess`). Exceptions, PDFs only: the `pdftotext` binary (poppler), and `beautifulsoup4` for the second PDF backend (listed in `code/requirements.txt`). |
 | Location | Package `code/ghostaudit/`; tests `code/tests/`; small synthetic fixtures `code/tests/fixtures/`. |
 | Paths | Resolve the repo root relative to the package file. Never hardcode absolute paths. |
 | Allowed hardcoding | File-format schemas, regexes, field names, lookup tables (resource prefix → system, collection → category, rule action → operations), the operation order table, sort keys. |
@@ -124,7 +124,7 @@ Each parser exposes `parse(entry: ManifestEntry, path) -> (list[Observation], li
 | `json_records.py` (28 files) | (a) flat `records[]` with `system`, `record_type`, `result`, `subject_reference`; (b) snapshot bundles `snapshots[]`, each with its own `captured_at`, including `operational_record_history` (`lookup_value`); (c) `service_resource_export` → `service_exports.{system}.{section}[]` with `observed_at`; search `hits.total == 0` → `NOT_FOUND`; (d) collection dumps (`customer_analytics_report`, `customer_export_jobs`) | Use the per-snapshot or per-item timestamp as `observed_at`. Use `result` as the state when present. An empty `records: []` snapshot produces a `Coverage`. |
 | `logs.py` (26 files) | 10 line styles: logfmt, JSON-after-timestamp, RFC5424 syslog, bracketed trace, pipe-delimited, cloud-runtime with an escaped nested `message`, `record_lookup` (explicit result), readback trace, `support_replica` | Step 1: parse each line into `(ts, level, service, trace_id, event, kv)`. Step 2: join `*_started` (`lookup_key`/`match_key`/`subject_key`/`scan_key`/`owner_key`/`subject_ref`) to `*_completed` on `trace_id`, because the lines are interleaved with other traces. Step 3: map the event to a state with a single table `EVENT_STATE_RULES` (below). Keep `correlation_key` as an identifier; it can be a user id, an email, or an email hash. |
 | `text_records.py` (1 file) | Handover lines `ts \| system \| resource \| record_type \| result \| subject` | Direct mapping; uppercase subjects are normalised. |
-| `pdf_text.py` (4 files) | Statement, attachment, legal register, compliance extract | Run `pdftotext -layout`, then regex out resource IDs, `user_N`, emails, phones, `ORD-` refs and dates. Emit fact-style observations (state `FOUND`, category from the document type) and keep the full text in `fields`. Fail with a clear message if `pdftotext` is missing. |
+| `pdf_text.py` (4 files) | Statement, attachment, legal register, compliance extract | Two backends behind one interface, `extract_lines(path, backend="pdftotext" \| "bs4") -> list[str]`. (1) **pdftotext:** `pdftotext -layout`. (2) **bs4:** `pdftotext -bbox-layout` XHTML parsed with BeautifulSoup (`html.parser`); words are rebuilt into lines from their coordinates. Shared fact extraction then regexes out resource IDs, `user_N`, emails, phones, `ORD-` refs and dates, and emits fact-style observations (state `FOUND`, category from the document type) with the full text kept in `fields`. Both backends must yield identical facts on all 4 PDFs. A missing binary or library gives a clear error. Selenium is not used: a browser renders PDFs but cannot extract their text. |
 | `images.py` (11 files) | Admin-console screenshots | **Not decodable without vision.** Reads `code/cache/vision/<file_id>.json` (schema: list of `{system_id, resource_id, state, identifiers[], observed_at}`). Returns nothing, with a warning, when the cache is missing. Filling the cache is the later AI step. |
 
 `EVENT_STATE_RULES` (initial; builders must verify each row against the real lines):
@@ -230,7 +230,8 @@ Derived from all 193 gold steps; every resource in the samples follows one of th
 | Phase | Agents | Files (disjoint, so no conflicts) |
 |---|---|---|
 | 0 | Main session writes `models.py` (the shared contract) | `models.py` |
-| 1: build | 3 coders in parallel: **A** T1–T5, T9–T11; **B** T6 parsers; **C** T7, T8, T12 | as listed |
+| 1a: build | Coder **A**: T1–T5 (the leaf modules every other tool imports) | `paths, loaders, timeutil, normalize, identity, rules` |
+| 1b: build | 3 coders in parallel: **B** T6 parsers; **C** T7, T8; **D** T9–T12 | as listed |
 | 2: test | 3 **fresh** test writers in parallel (none of them wrote the code under test), stdlib `unittest`, synthetic fixtures plus read-only real-data checks from the acceptance criteria | `code/tests/test_<module>.py` |
 | 3: clean | 1 cleanup agent: remove dead code and redundant comments, keep docstrings short; the full test suite must stay green | all of `ghostaudit/` |
 | 4 | Main session: runs all tests and acceptance checks, logs, commits, pushes | — |
