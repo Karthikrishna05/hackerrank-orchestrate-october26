@@ -281,3 +281,24 @@ repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=none
 
+## [2026-10-25T11:22:46Z] Plan case engine and AI parts; catalogue dataset exceptions
+
+User Prompt (verbatim, secrets redacted):
+now plan the case engine and the AI parts,and explain the exception cases that were encountered while analysing datasets and few ways to mitigate these issues while improving the generalisation capability of the system
+
+Agent Response Summary:
+Ran a gap analysis of the built tools against the 32 sample answers: 83 of 111 gold records (165 of 193 steps) are linked by identifier with 83/83 correct states, and every finding sits on such a record, so status is decidable from identifier-linked evidence; the other 28 are verification-only compliant records (11 in evidence without identifiers, 14 activity-only, 3 absent from participant data). Tested workflow-activity linking for identifier-free accounts (window 262/271, status-result consistency 266/271) and found it still ambiguous (about 5/20 sample accounts recovered), so the plan abstains unless unambiguous. Wrote code/docs/engine_plan.md with the engine pipeline, decision rules, AI parts (intent classifier, screenshot reader, optional category check) with caching and usage logging, 17 exception cases with mitigations, a generalisation strategy, evaluation and build plans. No ANTHROPIC_API_KEY or anthropic SDK is present; the user must add the key in environment settings.
+
+Actions:
+* Read-only Python gap and linkage analyses (scratchpad scripts) using code/ghostaudit tools
+* Checked environment for API key presence (value never read or printed)
+* Wrote code/docs/engine_plan.md; git commit + push
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=none
+
