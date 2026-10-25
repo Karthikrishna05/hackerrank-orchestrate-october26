@@ -288,3 +288,15 @@ From 2026-10-25 every design decision is approved by the project owner before it
 3. **API key:** added by the owner. It reaches new sessions only, so (owner decision) the engine,
    tests and cleanup are built in this session, and the AI steps run later in a new session on this branch.
 4. **Identifier-free records** (owner decision): add a record only when it is the single consistent candidate.
+
+### Owner decisions on the built engine and AI client (2026-10-25)
+| # | Topic | Decision |
+|---|---|---|
+| 5 | Old records | Skip an already-deleted record when **all** its evidence predates the current request (it belongs to an earlier request; sample `case_17`) |
+| 6 | Late export | A record seen present with `observed_at <= audit_at` in a file captured after the audit still counts as present. The finding cites the record's failed or partial deletion activity row (never the late file). If no such row exists, drop it with a note (`case_126`) |
+| 7 | Backup label | A backup shown on screen with no restore label is a restore risk (ACTIVE) |
+| 8 | No evidence | A deletion case with no usable evidence falls back to `NOT_APPLICABLE` (the only valid citation-free row) |
+| 9 | Link window | Catalog link rows count only inside the case's `[requested_at, audit_at]` window |
+| 10 | Interim screenshots | Until the vision cache is filled, a record with only a link row is assumed present and cites the link row's `activity_id` |
+| 11 | Intent prompt | The E2 prompt (`intent-v1`) is approved as built |
+| 12 | Index bug | `EvidenceIndex.for_subject` must ignore blank resource IDs; fix it with a regression test |

@@ -17,7 +17,15 @@ from . import intent_rules, loaders
 from .activity import ActivityDetails, ActivityLog
 from .evidence_index import EvidenceIndex
 from .identity import IdentityIndex
-from .models import NAME_PREFIX, Activity, IntentResult, Observation, Request, Step, SubjectProfile
+from .models import (
+    NAME_PREFIX,
+    Activity,
+    IntentResult,
+    Observation,
+    Request,
+    Step,
+    SubjectProfile,
+)
 from .normalize import natural_key, split_resource_id, system_for
 from .planner import MATRIX, NOT_APPLICABLE, assemble, plan
 from .rules import DATA_FLOW, PolicyTable

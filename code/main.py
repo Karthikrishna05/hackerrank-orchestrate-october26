@@ -13,8 +13,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from ghostaudit import engine, loaders, paths  # noqa: E402
-from ghostaudit.output import order_like_requests, validate_output, write_output  # noqa: E402
+from ghostaudit import engine, loaders, paths
+from ghostaudit.output import (
+    order_like_requests,
+    validate_output,
+    write_output,
+)
 
 
 def _requests(name: str):

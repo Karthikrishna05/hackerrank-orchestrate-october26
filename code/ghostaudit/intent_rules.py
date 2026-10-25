@@ -119,9 +119,9 @@ _MARKETING = TOPICS[0][1]
 
 # Language cues for Latin-script text; the language with the most cues wins, English by default.
 _LANG_CUES = (
-    ("pt", re.compile(r"\b(?:não|conta|exclusão|verifiquem|confirmem|análise|associada|você|obrigad\w*)\b", re.I)),
-    ("es", re.compile(r"\b(?:cuenta|eliminación|correo|revisen|confirmen|revisión|política|pueden|todavía)\b", re.I)),
-    ("fr", re.compile(r"\b(?:compte|suppression|veuillez|merci|adresse|votre|vous|définitive|je)\b", re.I)),
+    ("pt", re.compile(r"\b(?:não|conta|exclusão|verifiquem|confirmem|análise|associada|você|obrigad\w*)\b", re.IGNORECASE)),
+    ("es", re.compile(r"\b(?:cuenta|eliminación|correo|revisen|confirmen|revisión|política|pueden|todavía)\b", re.IGNORECASE)),
+    ("fr", re.compile(r"\b(?:compte|suppression|veuillez|merci|adresse|votre|vous|définitive|je)\b", re.IGNORECASE)),
 )
 
 

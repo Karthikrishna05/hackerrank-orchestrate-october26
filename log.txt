@@ -345,3 +345,23 @@ branch=claude/magical-carson-x2agxw
 repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=Claude Code (main session)
+
+## [2026-10-25T11:52:30Z] Sub-agent E1: case engine and CLI
+
+User Prompt (verbatim, secrets redacted):
+Parent agent delegated: build the deterministic case engine (engine.py), keyword intent baseline (intent_rules.py) and code/main.py per code/docs/engine_plan.md.
+
+Agent Response Summary:
+Built the keyword intent baseline (6 languages, refusal wins, verify/audit-a-deletion counts as deletion), the S1-S7 case engine with data tables for categories, field hints, state mapping and link-row fallback, and the code/main.py CLI. On the 518 evaluation requests the CLI writes a valid output.csv in about 1 s (COMPLETE 152, INCOMPLETE 356, NOT_APPLICABLE 10), and two runs give identical bytes. On the 32 samples it reaches the identifier-linked ceiling: 165/193 gold steps, 1 extra, status 29/32; every miss is an identifier-free record. Choices needing owner approval: link rows only count inside [requested_at, audit_at], a finding whose only evidence was captured after audit_at is dropped, and a deletion case with no evidence falls back to NOT_APPLICABLE.
+
+Actions:
+* Created code/ghostaudit/intent_rules.py and code/ghostaudit/engine.py; wrote code/main.py
+* Ran python3 code/main.py --intent rules|auto|cache, the sample run plus ghostaudit.scorer, sha256 determinism check, ruff, and the unit suite (770 tests OK)
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=Claude Code (main session)
