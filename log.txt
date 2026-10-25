@@ -302,3 +302,24 @@ repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=none
 
+## [2026-10-25T11:34:55Z] Switch AI parts to free OpenRouter models; start engine and AI client build
+
+User Prompt (verbatim, secrets redacted):
+but ai api keys are paid,use free models alternative.i can give openrouter free models api keys and continue to next
+
+Agent Response Summary:
+Switched the AI design to free OpenRouter models (default openrouter/free, the Free Models Router that picks a free model at random; pinnable via OPENROUTER_TEXT_MODEL / OPENROUTER_VISION_MODEL), called via stdlib urllib with caching, retries and usage logging. Found that the environment network policy blocks openrouter.ai and no OPENROUTER_API_KEY is set, so the user must allow the host and add the key in environment settings (never in chat); Firecrawl lookups failed for lack of credits. Added models.IntentResult, updated code/docs/engine_plan.md, and launched coder E1 (engine, keyword intent baseline, main.py) and coder E2 (OpenRouter client, intent classifier, vision cache filler, CLI; offline-verified only, no faked outputs).
+
+Actions:
+* curl/WebFetch to openrouter.ai (blocked by network policy); WebSearch for free-model router info
+* Edited code/ghostaudit/models.py, code/docs/engine_plan.md; git commit + push
+* Agent tool: coders E1 and E2 (running)
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=none
+
