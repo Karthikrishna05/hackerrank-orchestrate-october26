@@ -125,7 +125,7 @@ class TestExtractIdentifiers(unittest.TestCase):
     def test_names_next_to_identifiers_are_not_returned(self):
         got = extract_identifiers("name=Jonas Berg email=jonas.berg@outlook.com")
         self.assertEqual(got, {"jonas.berg@outlook.com"})
-        self.assertFalse(any(t.startswith(NAME_PREFIX) or "berg" == t for t in got))
+        self.assertFalse(any(t.startswith(NAME_PREFIX) or t == "berg" for t in got))
 
     def test_extracts_bare_64_hex_hash_lowercased(self):
         self.assertEqual(extract_identifiers("hash " + HASH_A.upper()), {HASH_A})
@@ -223,9 +223,8 @@ class TestSplitResourceId(unittest.TestCase):
 
     def test_raises_value_error_without_a_numeric_suffix(self):
         for bad in ("", "account", "account_", "_5", "5", "data_flow_95x", "data_flow_9522_extra"):
-            with self.subTest(bad=bad):
-                with self.assertRaises(ValueError):
-                    split_resource_id(bad)
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                split_resource_id(bad)
 
 
 class TestSystemFor(unittest.TestCase):

@@ -1,9 +1,4 @@
-"""Unit tests for ghostaudit.parsers.logs (tools_spec.md T6, logs row and EVENT_STATE_RULES).
-
-Step 1: `parse_log_line` for every line style in the dataset.
-Step 2: the `*_started` -> result join on trace_id across interleaved traces.
-Step 3: each EVENT_STATE_RULES row, applied to kv dicts shaped like parsed lines.
-"""
+"""Tests for ghostaudit.parsers.logs (tools_spec.md T6): line styles, trace_id join, EVENT_STATE_RULES."""
 
 from __future__ import annotations
 
@@ -88,7 +83,7 @@ def state_of(event: str, **kv) -> str:
 
 
 class ParseLogLineStyleTests(unittest.TestCase):
-    """Step 1: every line style splits into ts, level, service, trace_id, event, kv."""
+    """Every line style splits into ts, level, service, trace_id, event, kv."""
 
     def assertLine(self, line, **expected):
         rec = parse_log_line(line)
@@ -131,16 +126,11 @@ class ParseLogLineStyleTests(unittest.TestCase):
                               style="pipe")
         self.assertEqual(rec["kv"]["correlation_key"], "user_211")
 
-    # Regression (fixed): logs.parse_log_line keeps the leading "| " of the pipe style in the first field
-    # (rest = "| DEBUG | service | ..."), so level is "| DEBUG" on every pipe line
-    # (231 lines in evidence_21 and evidence_48). Suggested fix: strip the leading "|" before
-    # splitting, e.g. rest.lstrip("| ").split(" | ", 4).
+    # Regression: pipe-style level used to keep the leading "| ".
     def test_pipe_delimited_line_level(self):
         self.assertLine(PIPE, level="DEBUG")
 
-    # Regression (fixed): logs.parse_log_line splits the pipe style with rest.split(" | ") and requires exactly
-    # 5 parts, so a quoted kv value containing " | " makes the whole line unparseable.
-    # Suggested fix: rest.split(" | ", 4).
+    # Regression: a quoted value containing " | " used to make a pipe-style line unparseable.
     def test_pipe_line_with_a_pipe_inside_a_quoted_value(self):
         line = ('2026-07-03T07:52:00Z | INFO | support_platform | tr-5156006 | message_read | '
                 'resource_id="support_1" message_text="order A | order B"')
@@ -197,7 +187,7 @@ class ParseLogLineStyleTests(unittest.TestCase):
 
 
 class EventStateRulesTests(unittest.TestCase):
-    """Step 3: each row of the EVENT_STATE_RULES table in tools_spec.md T6."""
+    """Each row of the EVENT_STATE_RULES table in tools_spec.md T6."""
 
     SPEC_EVENTS = (
         "profile_lookup_completed", "index_query_completed", "analytics_profile_read",
@@ -276,9 +266,7 @@ class EventStateRulesTests(unittest.TestCase):
         self.assertEqual(state_of("message_read", message_text="Write to me at o.kay@example.com"),
                          "IDENTIFIABLE")
 
-    # Regression (fixed): logs.EVENT_STATE_RULES["message_read"] uses support_exposed(), which only looks for
-    # strong identifiers, so an unredacted message naming the customer is reported REDACTED.
-    # Spec T6: message_read -> message_text="[REDACTED]" -> REDACTED, else IDENTIFIABLE.
+    # Regression: an unredacted message naming the customer used to be reported REDACTED.
     def test_message_read_with_unredacted_text_is_identifiable(self):
         self.assertEqual(state_of("message_read", subject_ref="user_461",
                                   message_text="Hi, this is Ingrid Dahlberg, please call me back"),
@@ -343,7 +331,7 @@ class EventStateRulesTests(unittest.TestCase):
 
 
 class TraceJoinTests(unittest.TestCase):
-    """Step 2: started lines join their result line by trace_id across interleaved traces."""
+    """Started lines join their result line by trace_id across interleaved traces."""
 
     @classmethod
     def setUpClass(cls):

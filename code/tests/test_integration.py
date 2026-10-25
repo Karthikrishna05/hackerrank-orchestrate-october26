@@ -1,9 +1,4 @@
-"""Integration: identity -> parsers -> evidence index -> planner -> steps, on the real dataset.
-
-These tests prove the tools compose (tools_spec.md T4, T6, T7, T9, T10). The small
-resource -> kind mapping in the case_11 test is written inside the test on purpose: choosing
-kinds and resources is the case engine's job, not a tool's.
-"""
+"""Integration on the real dataset: identity -> parsers -> evidence index -> planner -> steps."""
 
 from __future__ import annotations
 

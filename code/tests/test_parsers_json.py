@@ -1,9 +1,4 @@
-"""Unit tests for ghostaudit.parsers.json_records (tools_spec.md T6, JSON row).
-
-Shapes: flat `records[]` lists with an explicit `result`, snapshot bundles (including
-`operational_record_history` and an empty snapshot), `service_resource_export`, and
-collection dumps.
-"""
+"""Tests for ghostaudit.parsers.json_records (tools_spec.md T6, JSON row)."""
 
 from __future__ import annotations
 
@@ -124,9 +119,7 @@ class FlatRecordsEdgeCaseTests(TempJsonMixin, unittest.TestCase):
         self.assertEqual(len(warns), 1)
         self.assertIn("evidence_t2", warns[0])
 
-    # Regression (fixed): json_records._record_obs uses `"result" in rec`, so an explicit JSON null result
-    # becomes UNKNOWN (with a warning) instead of falling back to the derived state, unlike
-    # the shared record_state() helper, which ignores an empty result.
+    # Regression: an explicit JSON null result used to give UNKNOWN instead of the derived state.
     def test_null_result_falls_back_to_the_derived_state(self):
         path = self.write({"exported_at": "2026-01-01T00:00:00Z", "records": [
             {"resource_id": "analytics_1", "record_type": "ANALYTICS_PROFILE", "result": None,

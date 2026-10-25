@@ -73,15 +73,13 @@ class TestDecisionMatrix(unittest.TestCase):
         undefined = [(k, s) for k in KINDS for s in STATES if (k, s) not in SPEC_MATRIX]
         self.assertTrue(undefined)
         for kind, state in undefined:
-            with self.subTest(kind=kind, state=state):
-                with self.assertRaises(ValueError):
-                    plan("sys", "res_1", kind, state, "evidence_01")
+            with self.subTest(kind=kind, state=state), self.assertRaises(ValueError):
+                plan("sys", "res_1", kind, state, "evidence_01")
 
     def test_unknown_kind_raises_value_error(self):
         for kind in ("ACCOUNT_TOMBSTONE", "delete", "USER_PROFILE", ""):
-            with self.subTest(kind=kind):
-                with self.assertRaises(ValueError):
-                    plan("sys", "res_1", kind, "FOUND", "evidence_01")
+            with self.subTest(kind=kind), self.assertRaises(ValueError):
+                plan("sys", "res_1", kind, "FOUND", "evidence_01")
 
     def test_unknown_state_raises_value_error(self):
         with self.assertRaises(ValueError):

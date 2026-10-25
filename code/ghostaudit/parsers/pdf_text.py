@@ -108,7 +108,7 @@ def _dates(line: str) -> list[str]:
 def extract_facts(lines: list[str]) -> dict:
     """Sorted resource IDs, user ids, emails, phones, hashes, ORD refs, other refs and ISO dates."""
     text = [_normalise(ln) for ln in lines]
-    ids = set().union(*(extract_identifiers(t) for t in text)) if text else set()
+    ids = set().union(*map(extract_identifiers, text))
     return {
         "resource_ids": sorted({m for t in text for m in _RESOURCE.findall(t)}),
         "user_ids": sorted(i for i in ids if i.startswith("user_")),

@@ -1,8 +1,4 @@
-"""Tests for ghostaudit.activity (tools_spec.md T8).
-
-Synthetic rows reuse the real sentence templates with fictional resource ids and people.
-Real-data checks run only when dataset/system_activity.csv is present.
-"""
+"""Tests for ghostaudit.activity (tools_spec.md T8), on synthetic rows that reuse the real templates."""
 
 from __future__ import annotations
 
@@ -39,9 +35,7 @@ def ids(rows) -> list[str]:
     return [a.activity_id for a in rows]
 
 
-# --------------------------------------------------------------------------------------------
-# parse_details(): templates, signals, resource ids, claims
-# --------------------------------------------------------------------------------------------
+# --- parse_details(): templates, signals, resource ids, claims ---
 
 class ParseDetailsSignalTest(unittest.TestCase):
 
@@ -128,7 +122,8 @@ class ParseDetailsClaimTest(unittest.TestCase):
 
     def test_a_success_claim_does_not_create_a_signal(self):
         d = parse_details(act("activity_1", "2026-09-01T00:00:00Z",
-                              "Deletion worker reported the requested operation as completed. Target resource: account_1.",
+                              "Deletion worker reported the requested operation as completed. "
+                              "Target resource: account_1.",
                               event_type="DELETE_RECORD", resource_id="account_1", result="SUCCESS"))
         self.assertEqual(d.template, "operation_completed")
         self.assertIsNone(d.signal)
@@ -160,9 +155,7 @@ class ParseDetailsClaimTest(unittest.TestCase):
         self.assertEqual(d.signal, "flow_enabled")
 
 
-# --------------------------------------------------------------------------------------------
-# ActivityLog
-# --------------------------------------------------------------------------------------------
+# --- ActivityLog ---
 
 class ActivityLogOrderTest(unittest.TestCase):
 
@@ -199,10 +192,7 @@ class ActivityLogOrderTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             ActivityLog([act("activity_42", "yesterday", INDEX_REFRESH.format("search_1"), resource_id="search_1")])
 
-    # Regression (fixed): ActivityLog.__init__ calls parse_ts(event_time) bare, so a malformed row raises
-    # "unparseable timestamp: 'yesterday'" without saying which row. tools_spec.md §1 (Errors)
-    # requires a clear message that locates the bad line. Suggested fix: catch ValueError in
-    # _row_key / __init__ and re-raise as ValueError(f"{a.activity_id}: unparseable event_time ...").
+    # Regression: a malformed event_time used to raise without naming the activity.
     def test_malformed_event_time_error_names_the_activity(self):
         with self.assertRaises(ValueError) as ctx:
             ActivityLog([act("activity_42", "yesterday", INDEX_REFRESH.format("search_1"), resource_id="search_1")])
@@ -346,9 +336,7 @@ class ActivityLogNonDeletionTest(unittest.TestCase):
         self.assertEqual(log.non_deletion_flags(), {})
 
 
-# --------------------------------------------------------------------------------------------
-# Real data (dataset/system_activity.csv)
-# --------------------------------------------------------------------------------------------
+# --- Real data (dataset/system_activity.csv) ---
 
 @unittest.skipUnless(DATASET_OK, "dataset/system_activity.csv not present")
 class RealActivityTest(unittest.TestCase):

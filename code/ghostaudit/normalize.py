@@ -35,6 +35,7 @@ _HASH_RE = re.compile(r"(?<![0-9A-Za-z])(?:(?i:sha256):)?([0-9a-fA-F]{64})(?![0-
 _USER_RE = re.compile(r"(?<![\w])(?i:user)_(\d+)(?![\w])")
 _RESOURCE_RE = re.compile(r"([a-z][a-z_]*?)_(\d+)")
 _WS_RE = re.compile(r"\s+")
+_DIGITS_RE = re.compile(r"(\d+)")
 
 
 def norm_email(s: str) -> str:
@@ -85,6 +86,11 @@ def extract_identifiers(text: str) -> set[str]:
         if 7 <= len(phone) - 1 <= 15:
             found.add(phone)
     return found
+
+
+def natural_key(s: str) -> tuple:
+    """Sort key that orders `evidence_9` before `evidence_10`."""
+    return tuple(int(p) if p.isdigit() else p for p in _DIGITS_RE.split(s))
 
 
 def split_resource_id(rid: str) -> tuple[str, int]:

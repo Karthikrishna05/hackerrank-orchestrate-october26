@@ -6,13 +6,12 @@ malformed input with `warnings.warn(..., ParseWarning)`; `parse_all` collects th
 
 from __future__ import annotations
 
-import re
 import warnings
 from pathlib import Path
 
 from ..loaders import load_manifest
 from ..models import Coverage, ManifestEntry, Observation, STATES
-from ..normalize import extract_identifiers, name_token, system_for
+from ..normalize import extract_identifiers, name_token, natural_key, system_for
 from ..paths import evidence_path
 from ..rules import DATA_FLOW
 from ..timeutil import to_iso
@@ -23,13 +22,11 @@ class ParseWarning(UserWarning):
 
 
 NAME_FIELDS = frozenset({"full_name", "display_name", "requester_name", "name"})
-NON_IDENTITY_FIELDS = frozenset({"integrity_seal"})
+NON_IDENTITY_FIELDS = frozenset({"integrity_seal"})  # zero-padded sha256 values, not identity
 ANALYTICS_ID_FIELDS = ("user_id", "customer_reference", "email", "phone", "email_hash")
 TOMBSTONE_ID_FIELDS = ("name", "email", "phone", "email_hash")
 SUPPORT_REQUESTER_FIELDS = ("requester_name", "requester_email", "requester_phone")
 SUPPORT_TEXT_FIELDS = ("message_text", "message_excerpt")
-FOUND_ONLY = frozenset({"USER_PROFILE", "SEARCH_INDEX_ENTRY", "SUPPORT_ATTACHMENT", "USER_EXPORT",
-                        "SECURITY_AUDIT_LOG", "LEGAL_HOLD_RECORD"})
 
 
 def is_null(v) -> bool:
@@ -53,10 +50,7 @@ def truthy(v) -> bool | None:
 
 
 def identifiers_of(value) -> frozenset[str]:
-    """Strong tokens in every string value (recursively) plus name tokens of name fields.
-
-    `integrity_seal` is skipped: its zero-padded sha256 values are not identity.
-    """
+    """Strong tokens in every string value (recursively) plus name tokens of name fields."""
     found: set[str] = set()
 
     def walk(v, key=None):
@@ -156,16 +150,12 @@ def parse_file(entry: ManifestEntry) -> tuple[list[Observation], list[Coverage]]
     return _module_for(entry).parse(entry, path)
 
 
-def _natural(s: str) -> tuple:
-    return tuple(int(p) if p.isdigit() else p for p in re.split(r"(\d+)", s))
-
-
 def obs_sort_key(o: Observation) -> tuple:
-    return (_natural(o.file_id), _natural(o.source), _natural(o.resource_id), o.observed_at, o.state)
+    return (natural_key(o.file_id), natural_key(o.source), natural_key(o.resource_id), o.observed_at, o.state)
 
 
 def cov_sort_key(c: Coverage) -> tuple:
-    return (_natural(c.file_id), c.system_id, c.store or "", c.collection, c.observed_at)
+    return (natural_key(c.file_id), c.system_id, c.store or "", c.collection, c.observed_at)
 
 
 def parse_all(manifest: list[ManifestEntry] | None = None
@@ -182,7 +172,7 @@ def parse_all(manifest: list[ManifestEntry] | None = None
                 obs, cov = parse_file(entry)
                 observations.extend(obs)
                 coverages.extend(cov)
-            except Exception as exc:  # noqa: BLE001 - reported, never silent
+            except Exception as exc:  # reported as a message, never silent
                 messages.append(f"{entry.file_id}: {type(exc).__name__}: {exc}")
         for w in caught:
             msg = str(w.message)
@@ -192,4 +182,4 @@ def parse_all(manifest: list[ManifestEntry] | None = None
     return observations, coverages, messages
 
 
-__all__ = ["ParseWarning", "parse_file", "parse_all", "identifiers_of", "record_state"]
+__all__ = ["ParseWarning", "identifiers_of", "parse_all", "parse_file", "record_state"]

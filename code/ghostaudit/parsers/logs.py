@@ -1,9 +1,4 @@
-"""Service logs in every line style of the dataset, mapped to resource states with EVENT_STATE_RULES.
-
-Step 1 `parse_log_line` splits a line into (ts, level, service, trace_id, event, kv).
-Step 2 joins `*_started` lines to their result lines on trace_id (traces are interleaved),
-so a result also carries the lookup key of its request. Step 3 maps the event to a state.
-"""
+"""Service logs in every line style of the dataset, mapped to resource states with EVENT_STATE_RULES."""
 
 from __future__ import annotations
 
@@ -234,6 +229,8 @@ def parse(entry: ManifestEntry, path: Path) -> tuple[list[Observation], list[Cov
             continue
         parsed.append((n, rec))
 
+    # Traces are interleaved, so each result line is joined to its `*_started` line on trace_id
+    # and also carries the lookup key of its request.
     started: dict[str, dict] = {}
     for _, rec in parsed:
         if is_start_event(rec["event"]) and rec["trace_id"]:

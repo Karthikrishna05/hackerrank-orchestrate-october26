@@ -1,8 +1,4 @@
-"""Unit tests for ghostaudit.parsers.pdf_text (tools_spec.md T6, PDF row).
-
-The three text backends (pdftotext, pdftotext -bbox-layout + bs4, pypdf) must give identical
-facts on the 4 dataset PDFs. Missing backends are simulated with unittest.mock.
-"""
+"""Tests for ghostaudit.parsers.pdf_text (tools_spec.md T6, PDF row)."""
 
 from __future__ import annotations
 
@@ -184,39 +180,37 @@ class MissingBackendTests(unittest.TestCase):
             extract_lines(self.FAKE, "tesseract")
 
     def test_missing_pdftotext_binary_raises_runtime_error(self):
-        with mock.patch.object(pdf_text.shutil, "which", return_value=None):
-            with self.assertRaisesRegex(RuntimeError, "pdftotext"):
-                extract_lines(self.FAKE, "pdftotext")
+        with (mock.patch.object(pdf_text.shutil, "which", return_value=None),
+              self.assertRaisesRegex(RuntimeError, "pdftotext")):
+            extract_lines(self.FAKE, "pdftotext")
 
     @unittest.skipUnless(HAVE_BS4, "beautifulsoup4 not installed")
     def test_bs4_backend_without_pdftotext_binary_raises_runtime_error(self):
-        with mock.patch.object(pdf_text.shutil, "which", return_value=None):
-            with self.assertRaisesRegex(RuntimeError, "pdftotext"):
-                extract_lines(self.FAKE, "bs4")
+        with (mock.patch.object(pdf_text.shutil, "which", return_value=None),
+              self.assertRaisesRegex(RuntimeError, "pdftotext")):
+            extract_lines(self.FAKE, "bs4")
 
     def test_missing_bs4_library_raises_runtime_error(self):
-        with mock.patch.dict(sys.modules, {"bs4": None}):
-            with self.assertRaisesRegex(RuntimeError, "beautifulsoup4"):
-                extract_lines(self.FAKE, "bs4")
+        with mock.patch.dict(sys.modules, {"bs4": None}), self.assertRaisesRegex(RuntimeError, "beautifulsoup4"):
+            extract_lines(self.FAKE, "bs4")
 
     def test_missing_pypdf_library_raises_runtime_error(self):
-        with mock.patch.dict(sys.modules, {"pypdf": None}):
-            with self.assertRaisesRegex(RuntimeError, "pypdf"):
-                extract_lines(self.FAKE, "pypdf")
+        with mock.patch.dict(sys.modules, {"pypdf": None}), self.assertRaisesRegex(RuntimeError, "pypdf"):
+            extract_lines(self.FAKE, "pypdf")
 
     def test_failing_pdftotext_run_raises_runtime_error(self):
         failed = subprocess.CompletedProcess(["pdftotext"], 1, stdout="", stderr="Syntax Error")
-        with mock.patch.object(pdf_text.shutil, "which", return_value="/usr/bin/pdftotext"), \
-                mock.patch.object(pdf_text.subprocess, "run", return_value=failed):
-            with self.assertRaisesRegex(RuntimeError, "Syntax Error"):
-                extract_lines(self.FAKE, "pdftotext")
+        with (mock.patch.object(pdf_text.shutil, "which", return_value="/usr/bin/pdftotext"),
+              mock.patch.object(pdf_text.subprocess, "run", return_value=failed),
+              self.assertRaisesRegex(RuntimeError, "Syntax Error")):
+            extract_lines(self.FAKE, "pdftotext")
 
     def test_parse_without_any_backend_raises_runtime_error_naming_the_file(self):
         entry = ManifestEntry("evidence_t8", str(self.FAKE), "test_fixture", "2026-09-05T06:30:00Z")
-        with mock.patch.object(pdf_text.shutil, "which", return_value=None), \
-                mock.patch.dict(sys.modules, {"pypdf": None}):
-            with self.assertRaisesRegex(RuntimeError, "evidence_t8"):
-                pdf_text.parse(entry, self.FAKE)
+        with (mock.patch.object(pdf_text.shutil, "which", return_value=None),
+              mock.patch.dict(sys.modules, {"pypdf": None}),
+              self.assertRaisesRegex(RuntimeError, "evidence_t8")):
+            pdf_text.parse(entry, self.FAKE)
 
 
 class ExtractFactsTests(unittest.TestCase):

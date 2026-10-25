@@ -6,19 +6,16 @@ Equal timestamps count as at-or-before.
 
 from __future__ import annotations
 
-import re
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from datetime import datetime
 from typing import NamedTuple
 
 from .models import Coverage, ManifestEntry, Observation, SubjectProfile
-from .normalize import split_resource_id
+from .normalize import natural_key, split_resource_id
 from .timeutil import parse_ts
 
 REASONS = ("identifier", "resource_link", "extra_link", "field_reference")
-
-_DIGITS = re.compile(r"(\d+)")
 
 
 class SubjectMatch(NamedTuple):
@@ -26,11 +23,6 @@ class SubjectMatch(NamedTuple):
 
     observation: Observation
     reason: str
-
-
-def natural_key(s: str) -> tuple:
-    """Sort key that orders `evidence_9` before `evidence_10`."""
-    return tuple(int(p) if p.isdigit() else p for p in _DIGITS.split(s))
 
 
 def is_resource_id(value: object) -> bool:

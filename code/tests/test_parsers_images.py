@@ -1,8 +1,4 @@
-"""Unit tests for ghostaudit.parsers.images (tools_spec.md T6, screenshots row).
-
-Screenshots are read only through the vision cache `code/cache/vision/<file_id>.json`
-(a list of {system_id, resource_id, state, identifiers[], observed_at}).
-"""
+"""Tests for ghostaudit.parsers.images (tools_spec.md T6): screenshots are read via the vision cache."""
 
 from __future__ import annotations
 
@@ -50,14 +46,11 @@ class MissingCacheTests(unittest.TestCase):
         self.assertEqual(len(warns), 1)
         self.assertIn(file_id, warns[0])
 
-    # Regression (fixed): images.parse builds its warning with cache.relative_to(repo_root()), which raises
-    # ValueError when the cache directory is outside the repository (e.g. a relocated or
-    # patched cache_path), so a missing cache crashes instead of warning. Suggested fix:
-    # fall back to the absolute path, e.g. use os.path.relpath or a try/except around it.
+    # Regression: a missing cache outside the repository used to crash in relative_to() instead of warning.
     def test_missing_cache_in_a_relocated_directory_still_only_warns(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            with mock.patch.object(images, "cache_path", lambda fid: Path(tmp) / f"{fid}.json"):
-                obs, cov, warns = parse_image(entry_for("evidence_04"))
+        with (tempfile.TemporaryDirectory() as tmp,
+              mock.patch.object(images, "cache_path", lambda fid: Path(tmp) / f"{fid}.json")):
+            obs, cov, warns = parse_image(entry_for("evidence_04"))
         self.assertEqual((obs, cov, len(warns)), ([], [], 1))
 
 

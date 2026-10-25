@@ -97,9 +97,8 @@ class TestMakeStep(unittest.TestCase):
 
     def test_make_step_rejects_unknown_operation(self):
         for bad in ("PURGE_RECORD", "delete_record", ""):
-            with self.subTest(bad=bad):
-                with self.assertRaises(ValueError):
-                    make_step(bad, "sys", "res_1")
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                make_step(bad, "sys", "res_1")
 
 
 class TestStepKey(unittest.TestCase):

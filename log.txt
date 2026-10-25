@@ -239,3 +239,45 @@ branch=claude/magical-carson-x2agxw
 repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=Claude Code (main session)
+
+## [2026-10-25T11:09:43Z] Sub-agent CLEAN: remove unnecessary code and comments
+
+User Prompt (verbatim, secrets redacted):
+Parent agent delegated: make code/ghostaudit and code/tests clean and concise without changing behaviour (tests, fingerprint and ruff F must stay green).
+
+Agent Response Summary:
+Removed the duplicate natural-sort helper (parsers._natural vs evidence_index.natural_key) by moving natural_key into normalize.py and importing it in evidence_index (still importable there), parsers and activity. Dropped an unused loop variable in sql_snapshot, a redundant guard in pdf_text.extract_facts, an unused noqa, and condensed docstrings while keeping the why-comments (trace join, integrity_seal, observed_at vs captured_at). In tests: shortened the 10 regression blocks to one line each, condensed module docstrings, collapsed section banners, merged nested with-statements and fixed ruff F401/SIM300/RUF059. Line counts: ghostaudit 2472 -> 2451, tests 5902 -> 5800; no public API, logic or test changes.
+
+Actions:
+* Edited code/ghostaudit/{normalize,evidence_index,activity,models}.py and parsers/{__init__,logs,pdf_text,sql_snapshot}.py
+* Edited 15 files in code/tests/ (comments, docstrings, with-merges, unused import/variable)
+* Ran unittest discover (770 tests OK), scratchpad fingerprint.py (unchanged hash), ruff check ghostaudit --select F (clean)
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=Claude Code (main session)
+## [2026-10-25T11:11:03Z] Build complete: tools, tests, fixes and cleanup (continuation)
+
+User Prompt (verbatim, secrets redacted):
+approved, go ahead with the build,for pdf reading ,build pdftotext version as well as beautifulsoup/selenium version
+
+Agent Response Summary:
+Continuation of the approved build. Coders B, C and D finished and were verified (parsers: 2,897 observations, 384 coverages; citation rule agrees with 74/75 sample citations; case_11 rebuilt exactly). Three independent test writers produced 764 unittest tests and documented 9 bugs; the main session fixed them plus an absence-proof gap (older listing overriding newer evidence) and added a canonical step-order check, ending at 770 passing tests. The cleanup agent then removed dead code, one duplicated helper and redundant comments with behaviour proven identical by a real-data output fingerprint; the main session also removed the dead FOUND_ONLY constant.
+
+Actions:
+* Agent tool: coders B, C, D; test writers T1, T2, T3; cleanup agent
+* Edited parsers/logs.py, parsers/json_records.py, parsers/images.py, parsers/__init__.py, evidence_index.py, activity.py, scorer.py, steps.py, tests (bug fixes, regression tests), code/docs/tools_spec.md
+* Ran unittest suite (770 OK), fingerprint (unchanged), ruff F (clean); git commits + pushes
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=none
+

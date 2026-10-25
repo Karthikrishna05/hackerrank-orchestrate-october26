@@ -64,7 +64,7 @@ def parse(entry: ManifestEntry, path: Path) -> tuple[list[Observation], list[Cov
     coverages: list[Coverage] = []
     inventory = SCOPE_TABLE in data
     generic_pairs: set[tuple[str, str]] = set()
-    generic_tables: list[tuple[str, str]] = []
+    generic_stores: list[str] = []
 
     for table in tables:
         if table == SCOPE_TABLE:
@@ -74,7 +74,7 @@ def parse(entry: ManifestEntry, path: Path) -> tuple[list[Observation], list[Cov
         if inventory and table in COLLECTION_SYSTEM:
             store, collection = "inventory", table
         elif base == GENERIC_BASE and store:
-            generic_tables.append((table, store))
+            generic_stores.append(store)
             collection = None
         elif base in TYPED_BASES and store:
             collection = TYPED_BASES[base]
@@ -104,7 +104,7 @@ def parse(entry: ManifestEntry, path: Path) -> tuple[list[Observation], list[Cov
 
     # A generic table holds the whole customer_data store, so it covers every
     # (system, collection) the snapshot shows in any of its replicas.
-    for table, store in generic_tables:
+    for store in generic_stores:
         for system, coll in sorted(generic_pairs):
             coverages.append(make_coverage(entry, system=system, collection=coll,
                                            observed_at=header_ts, store=store))

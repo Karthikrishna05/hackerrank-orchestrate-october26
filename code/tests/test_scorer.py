@@ -246,7 +246,7 @@ class TestMarkdown(unittest.TestCase):
 
 
 class TestScoreSignature(unittest.TestCase):
-    # Regression (fixed): tools_spec T12 defines score(predicted_csv, gold_csv); scorer.score only accepts parsed row mappings and crashes (TypeError) on CSV paths.
+    # Regression: score() used to reject CSV paths (tools_spec T12 takes file paths).
     def test_score_accepts_csv_paths_as_in_spec(self):
         with tempfile.TemporaryDirectory() as tmp:
             rows = [(c, s, st) for c, (s, st) in sorted(gold().items())]

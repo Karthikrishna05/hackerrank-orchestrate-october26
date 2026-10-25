@@ -1,9 +1,4 @@
-"""Tests for ghostaudit.evidence_index (tools_spec.md T7).
-
-Almost every test builds a small index from synthetic Observation/Coverage objects, so the
-suite needs no dataset. The core rule under test: nothing observed after the cutoff is ever
-returned; equal timestamps count as at-or-before; the manifest `captured_at` decides citability.
-"""
+"""Tests for ghostaudit.evidence_index (tools_spec.md T7), on small synthetic indexes."""
 
 from __future__ import annotations
 
@@ -77,18 +72,12 @@ def index(observations=(), coverages=(), manifest=()) -> EvidenceIndex:
     return EvidenceIndex(list(observations), list(coverages), list(manifest))
 
 
-def ts(o) -> object:
-    return parse_ts(o.observed_at)
-
-
 def matched(matches) -> dict[tuple[str, str, str], str]:
     """{(file_id, resource_id, source): reason} for easy assertions."""
     return {(m.observation.file_id, m.observation.resource_id, m.observation.source): m.reason for m in matches}
 
 
-# --------------------------------------------------------------------------------------------
-# The time cut-off
-# --------------------------------------------------------------------------------------------
+# --- The time cut-off ---
 
 class TimeCutoffTest(unittest.TestCase):
 
@@ -155,7 +144,7 @@ class TimeCutoffTest(unittest.TestCase):
                 returned += list(idx.states_by_store(rid, cutoff).values())
             with self.subTest(cutoff=cutoff):
                 self.assertTrue(returned, "the scenario should return something at this cutoff")
-                self.assertEqual([o for o in returned if ts(o) > cut], [])
+                self.assertEqual([o for o in returned if parse_ts(o.observed_at) > cut], [])
                 for system_id in {system_for(r) for r in resources}:
                     self.assertTrue(all(parse_ts(c.observed_at) <= cut for c in idx.coverage(system_id, cutoff)))
                     for rid in resources:
@@ -194,9 +183,7 @@ class TimeCutoffTest(unittest.TestCase):
         self.assertEqual(idx.history("account_1", CUT), [o])
 
 
-# --------------------------------------------------------------------------------------------
-# citable(): the manifest captured_at decides which file may be cited
-# --------------------------------------------------------------------------------------------
+# --- citable(): the manifest captured_at decides which file may be cited ---
 
 class CitableTest(unittest.TestCase):
 
@@ -257,9 +244,7 @@ class CitableTest(unittest.TestCase):
         self.assertEqual(answers, {"evidence_10"})
 
 
-# --------------------------------------------------------------------------------------------
-# for_subject(): who the evidence is about
-# --------------------------------------------------------------------------------------------
+# --- for_subject(): who the evidence is about ---
 
 class ForSubjectTest(unittest.TestCase):
 
@@ -427,9 +412,7 @@ class ForSubjectTest(unittest.TestCase):
         self.assertEqual(idx.for_subject(profile(), CUT, strict=True), [])
 
 
-# --------------------------------------------------------------------------------------------
-# states_by_store(): replica drift
-# --------------------------------------------------------------------------------------------
+# --- states_by_store(): replica drift ---
 
 class StatesByStoreTest(unittest.TestCase):
 
@@ -455,9 +438,7 @@ class StatesByStoreTest(unittest.TestCase):
         self.assertEqual(index([obs()]).states_by_store("account_404", LATE), {})
 
 
-# --------------------------------------------------------------------------------------------
-# coverage() and absent_in(): proving absence from full-collection listings
-# --------------------------------------------------------------------------------------------
+# --- coverage() and absent_in(): proving absence from full-collection listings ---
 
 class CoverageTest(unittest.TestCase):
 
@@ -531,9 +512,7 @@ class AbsentInTest(unittest.TestCase):
         self.assertEqual(idx.absent_in("account_1", "account_service", CUT), listing)
 
 
-# --------------------------------------------------------------------------------------------
-# history() / state_at(): sort order and tie-breaks
-# --------------------------------------------------------------------------------------------
+# --- history() / state_at(): sort order and tie-breaks ---
 
 class HistoryOrderTest(unittest.TestCase):
 
@@ -568,12 +547,7 @@ class HistoryOrderTest(unittest.TestCase):
             self.assertEqual([o.source for o in idx.history("account_1", CUT)], baseline)
             self.assertEqual(idx.state_at("account_1", CUT).source, baseline[-1])
 
-    # Regression (fixed): EvidenceIndex.__init__ sorts ties on (observed_at, captured_at, file_id) by the raw
-    # `source` string, so within one file `json:records[10]` sorts before `json:records[9]` (and
-    # `log:line 10` before `log:line 9`). state_at() then reports the earlier record as the latest,
-    # and the natural order the parsers emit (parsers.obs_sort_key) is lost. Suggested fix: use
-    # natural_key(source) in the sort key, as is already done for file_id. No real-data impact today
-    # (no same-file, same-time state conflicts), so this is low severity.
+    # Regression: same-time ties used to sort by the raw source string (records[10] before records[9]).
     def test_same_file_same_time_tie_follows_natural_locator_order(self):
         rec9 = obs(file_id="evidence_5", observed_at=EARLY, state="FOUND", source="json:records[9]")
         rec10 = obs(file_id="evidence_5", observed_at=EARLY, state="NOT_FOUND", source="json:records[10]")
@@ -582,9 +556,7 @@ class HistoryOrderTest(unittest.TestCase):
         self.assertIs(idx.state_at("account_1", CUT), rec10)
 
 
-# --------------------------------------------------------------------------------------------
-# Robustness: malformed input is reported, never silently dropped
-# --------------------------------------------------------------------------------------------
+# --- Robustness: malformed input is reported, never silently dropped ---
 
 class RobustnessTest(unittest.TestCase):
 
@@ -617,10 +589,7 @@ class RobustnessTest(unittest.TestCase):
         self.assertEqual(idx.warnings, [])
         self.assertEqual(idx.citable("account_1", CUT), "evidence_47")
 
-    # Regression (fixed): EvidenceIndex.__init__ parses every manifest captured_at with a bare parse_ts(), so one
-    # malformed manifest row raises "unparseable timestamp: '...'" without naming the file. The spec
-    # (tools_spec.md §1, Errors) requires a clear message with the file_id. Suggested fix: wrap the
-    # manifest parse and either raise ValueError(f"{m.file_id}: ...") or record a warning naming it.
+    # Regression: a malformed manifest captured_at used to raise without naming the file.
     def test_malformed_manifest_capture_time_is_reported_with_its_file_id(self):
         manifest = [ManifestEntry("evidence_77", "records/x.json", "test", "not-a-time")]
         try:
@@ -647,9 +616,7 @@ class RobustnessTest(unittest.TestCase):
             index([obs()]).history("account_1", "soon")
 
 
-# --------------------------------------------------------------------------------------------
-# Extras: in_file, with_token, resource_ids, natural_key, is_resource_id
-# --------------------------------------------------------------------------------------------
+# --- Extras: in_file, with_token, resource_ids, natural_key, is_resource_id ---
 
 class ExtrasTest(unittest.TestCase):
 
@@ -691,9 +658,7 @@ class ExtrasTest(unittest.TestCase):
                 self.assertFalse(is_resource_id(value))
 
 
-# --------------------------------------------------------------------------------------------
-# build(): parse a manifest through the parsers and index the result
-# --------------------------------------------------------------------------------------------
+# --- build(): parse a manifest through the parsers and index the result ---
 
 class BuildTest(unittest.TestCase):
 

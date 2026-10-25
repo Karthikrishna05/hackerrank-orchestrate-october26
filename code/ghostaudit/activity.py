@@ -1,4 +1,4 @@
-"""T8: activity stream tools. Details and `reported_result` are claims; nothing here decides deletion status."""
+"""T8: activity stream tools. Details and `reported_result` are claims, so nothing here decides deletion status."""
 
 from __future__ import annotations
 
@@ -8,9 +8,9 @@ from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-from .evidence_index import is_resource_id, natural_key
+from .evidence_index import is_resource_id
 from .models import Activity
-from .normalize import extract_identifiers
+from .normalize import extract_identifiers, natural_key
 from .timeutil import parse_ts
 
 SIGNALS = ("flow_enabled", "restore_possible", "repopulated", "non_deletion", "identity_link")
@@ -19,7 +19,8 @@ SIGNALS = ("flow_enabled", "restore_possible", "repopulated", "non_deletion", "i
 # {E} email, {U} user id, {X} secondary id in parentheses.
 _TEMPLATES = (
     ("final_result", "Deletion worker received the final result for {R} from {S}.", None),
-    ("operation_completed", "Deletion worker reported the requested operation as completed. Target resource: {R}.", None),
+    ("operation_completed", "Deletion worker reported the requested operation as completed. "
+                            "Target resource: {R}.", None),
     ("unconfirmed_state", "Deletion worker completed some internal work but could not confirm the final state. "
                           "Target resource: {R}.", None),
     ("worker_error", "Deletion worker stopped after the target system returned an error. Target resource: {R}.", None),

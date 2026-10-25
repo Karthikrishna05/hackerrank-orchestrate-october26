@@ -47,9 +47,8 @@ class TestParseTs(unittest.TestCase):
 
     def test_parse_ts_raises_value_error_for_garbage(self):
         for bad in ("", "   ", "yesterday", "15/09/2026", "2026-13-01T00:00:00Z", "2026-09-15T25:00:00Z"):
-            with self.subTest(bad=bad):
-                with self.assertRaises(ValueError):
-                    parse_ts(bad)
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                parse_ts(bad)
 
     def test_parse_ts_orders_mixed_formats_chronologically(self):
         stamps = ["2026-09-15T12:00:00+02:00",  # 10:00Z

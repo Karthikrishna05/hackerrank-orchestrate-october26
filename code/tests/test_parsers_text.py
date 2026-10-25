@@ -1,7 +1,4 @@
-"""Unit tests for ghostaudit.parsers.text_records (tools_spec.md T6, text handover row).
-
-Format: `- ts | system | resource | record_type | result | subject` lines under a header.
-"""
+"""Tests for ghostaudit.parsers.text_records (tools_spec.md T6, text handover row)."""
 
 from __future__ import annotations
 

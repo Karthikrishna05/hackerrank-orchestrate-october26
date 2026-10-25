@@ -5,17 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 # Normalised resource states produced by the evidence parsers.
-STATES = (
-    "FOUND",
-    "NOT_FOUND",
-    "IDENTIFIABLE",
-    "ANONYMIZED",
-    "REDACTED",
-    "ACTIVE",
-    "DISABLED",
-    "BLOCKED",
-    "UNKNOWN",
-)
+STATES = ("FOUND", "NOT_FOUND", "IDENTIFIABLE", "ANONYMIZED", "REDACTED",
+          "ACTIVE", "DISABLED", "BLOCKED", "UNKNOWN")
 
 # Names are weak identifiers (shared by several users), so they are kept apart
 # from strong tokens inside Observation.identifiers: "name:<casefolded name>".

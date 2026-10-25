@@ -1,8 +1,4 @@
-"""Tests for ghostaudit.parsers (__init__): dispatch, shared helpers and parse_all.
-
-The RealDatasetAcceptanceTests class checks the T6 acceptance criteria in
-code/docs/tools_spec.md against the participant dataset (read-only), parsing it once.
-"""
+"""Tests for ghostaudit.parsers (__init__): dispatch, shared helpers, parse_all and T6 acceptance."""
 
 from __future__ import annotations
 
@@ -173,7 +169,7 @@ class DispatchTests(unittest.TestCase):
     def test_parse_all_turns_a_failing_file_into_a_message(self):
         manifest = [fixture_entry("handover.txt", "evidence_t10"),
                     ManifestEntry("evidence_t11", str(self.tmp / "gone.sql"), "x", "2026-01-01T00:00:00Z")]
-        obs, cov, messages = parse_all(manifest)
+        obs, _, messages = parse_all(manifest)
         self.assertEqual(len(obs), 4)
         self.assertEqual(len(messages), 1)
         self.assertTrue(messages[0].startswith("evidence_t11: FileNotFoundError"), messages)
@@ -317,8 +313,7 @@ class RealDatasetAcceptanceTests(unittest.TestCase):
                     leaking.append((entry.file_id, n))
         self.assertEqual(leaking, [])
 
-    # Regression (fixed): same as test_parsers_logs.ParseLogLineStyleTests.test_pipe_delimited_line_level:
-    # pipe-style lines keep the leading "| " in the level ("| DEBUG").
+    # Regression: pipe-style levels used to keep the leading "| " (see test_parsers_logs).
     def test_every_parsed_log_level_is_a_plain_level_word(self):
         levels = set()
         for entry in self.log_entries:

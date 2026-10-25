@@ -1,9 +1,4 @@
-"""Unit tests for ghostaudit.parsers.sql_snapshot (tools_spec.md T6, SQL row).
-
-Fixtures in fixtures/parsers/ cover the three SQL families found in the dataset:
-generic `customer_data_<store>` tables with `record_json`, typed `<collection>_<store>`
-tables, and the inventory schema with `snapshot_scope`.
-"""
+"""Tests for ghostaudit.parsers.sql_snapshot (tools_spec.md T6, SQL row)."""
 
 from __future__ import annotations
 
@@ -14,7 +9,7 @@ import warnings
 from pathlib import Path
 
 from ghostaudit.models import ManifestEntry
-from ghostaudit.parsers import ParseWarning, sql_snapshot
+from ghostaudit.parsers import sql_snapshot
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "parsers"
 MANIFEST_CAPTURED_AT = "2026-09-21T10:05:00Z"  # differs from the SQL header on purpose
