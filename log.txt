@@ -494,3 +494,22 @@ branch=claude/magical-carson-x2agxw
 repo_root=/home/user/hackerrank-orchestrate-october26
 worktree=main
 parent_agent=Claude Code (main session)
+## [2026-10-25T12:56:40Z] Finalise submission: README, evaluation and usage reports, code.zip
+
+User Prompt (verbatim, secrets redacted):
+finish faster i need to submit this within 10 mins
+
+Agent Response Summary:
+Switched to submission mode: stopped the in-progress coder F3 before it edited anything (decisions 32-37 affect only AI-client retry details, not output.csv), regenerated and validated output.csv (518 rows, sha256 e254d0e7..., keyword-rule intent, no model calls), and wrote code/README.md, code/evaluation/evaluation_report.md (sample status 90.62%, step P/R/F1 100/85.49/92.18, field 72.88%, sequence 34.38%, 7 custom cases, failures and fixes) and code/evaluation/usage_report.md (0 model calls, $0). Built code.zip from code/ without caches or dataset. Decisions 32-37 remain recorded but unimplemented.
+
+Actions:
+* TaskStop coder F3; ran main.py and scorer; wrote README and evaluation reports; zip; git commit + push
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=claude/magical-carson-x2agxw
+repo_root=/home/user/hackerrank-orchestrate-october26
+worktree=main
+parent_agent=none
+
