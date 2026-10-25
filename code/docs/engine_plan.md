@@ -120,16 +120,41 @@ status. The threshold is chosen by scoring both options on the samples.
 
 ---
 
-## 3. AI parts
+## 3. AI parts (free models via OpenRouter)
 
 The LLM is used only where rules cannot work. Every output is cached on disk and committed, so
 runs are reproducible and the final run needs no API calls unless the cache is missing.
 
-| Part | Job | Calls | Model (to confirm at build time) |
-|---|---|---|---|
-| **A1 Intent** | Does the request authorize deletion? | 375 distinct evaluation texts + 32 sample texts, sent in batches of about 25, so about 17 calls | `claude-sonnet-5-5` (or `claude-haiku-5-5` if accuracy on test cases is equal) |
-| **A2 Vision** | Read the facts shown in the 11 screenshots | 11 calls, one per image | `claude-sonnet-5-5` |
-| **A3 Category check** (optional) | Settle a record whose category hints conflict | expected to be a handful | `claude-sonnet-5-5` |
+**Provider:** OpenRouter's OpenAI-compatible endpoint
+(`https://openrouter.ai/api/v1/chat/completions`), with free models only. It is called with
+the Python standard library (`urllib`), so there is no SDK dependency.
+
+| Setting | Environment variable | Default |
+|---|---|---|
+| API key (required for AI runs) | `OPENROUTER_API_KEY` | none. It is never logged and never written to disk |
+| Text model (A1, A3) | `OPENROUTER_TEXT_MODEL` | `openrouter/free` |
+| Vision model (A2) | `OPENROUTER_VISION_MODEL` | `openrouter/free` |
+
+- **About `openrouter/free`:** OpenRouter's Free Models Router (released Feb 2026; text and
+  image input) picks a free model **at random** among those supporting the request's needs. So:
+  - (a) the actual model is read from each response's `model` field and logged;
+  - (b) answers can vary between runs, which the cache neutralises;
+  - (c) to pin models, set the two variables to specific `:free` model IDs chosen from
+    OpenRouter's model list once the network allows it.
+- **Free endpoints are rate limited:** the client retries `429`/`5xx` with exponential backoff
+  and keeps batches small. A failed item is retried on the next run, never guessed.
+- **Structured output:** the client asks for JSON and validates it against the expected
+  schema. Invalid JSON is retried once with the error appended, then marked as failed.
+- **Cost:** free models cost $0. The usage report still logs calls and tokens from each
+  response's `usage` field.
+- **Fallbacks:** without a key or network access, A1 uses the keyword baseline (labelled
+  `source="rules"`) and A2 leaves the screenshot cache empty. Results are never mocked.
+
+| Part | Job | Calls |
+|---|---|---|
+| **A1 Intent** | Does the request authorize deletion? | 375 distinct evaluation texts + 32 sample texts, in batches of about 10, so about 41 calls |
+| **A2 Vision** | Read the facts shown in the 11 screenshots | 11 calls, one per image |
+| **A3 Category check** (optional) | Settle a record whose category hints conflict | expected to be a handful |
 
 ### A1 Intent classifier
 - **Output (JSON):** `{authorizes_deletion, request_type, language, confidence, quote}`.
@@ -158,10 +183,25 @@ runs are reproducible and the final run needs no API calls unless the cache is m
   `user_09` (`case_63`). The engine links through the catalog row and flags the case.
 
 ### Usage logging
-A thin client wrapper records model, input and output tokens per call in
-`code/cache/usage.jsonl`. `evaluation/usage_report.md` is generated from it, with costs
-computed from the published price list at run time rather than hard-coded. The API key is read
-only from the `ANTHROPIC_API_KEY` environment variable and is never logged.
+The client records, per call: the requested and actual model, input and output tokens, latency
+and outcome, in `code/cache/usage.jsonl`. `evaluation/usage_report.md` is generated from it.
+The API key is read only from `OPENROUTER_API_KEY` and is never logged.
+
+### Module contracts (for the build agents)
+- `models.IntentResult(authorizes_deletion, request_type, language, confidence, source, quote)`
+  is shared by every intent source.
+- `intent_rules.classify(text) -> IntentResult`: keyword baseline, deterministic, 6 languages.
+- `llm.OpenRouterClient`: `chat_json(messages, model, schema_hint) -> (dict, usage)`. It covers
+  retries, JSON validation, usage logging, and an image helper that builds base64 data URLs.
+- `intent_llm.classify_all(texts) -> dict[sha256(text), IntentResult]`: batched and cached in
+  `code/cache/intent/<sha256>.json`.
+- `vision.fill_cache(manifest)`: one call per PNG. It writes the raw labels to
+  `code/cache/vision/<file_id>.raw.json`, and the facts mapped by deterministic rules to
+  `code/cache/vision/<file_id>.json`, the schema `parsers/images.py` reads.
+- `ai_cli`: `python -m ghostaudit.ai_cli {intent,vision,status}` fills or inspects the caches.
+- `engine.Context.build()` loads everything once. `engine.audit_case(request, ctx) -> CaseResult(status, steps, notes)`.
+  `engine.run(requests, ctx) -> list[CaseResult]`.
+- `code/main.py`: `python code/main.py [--requests deletion_requests.csv] [--output output.csv] [--intent auto|rules|cache]` writes and validates `output.csv`.
 
 ---
 
@@ -237,10 +277,12 @@ only from the `ANTHROPIC_API_KEY` environment variable and is never logged.
 | E4 | Evaluation report, usage report, custom cases, README | Required sections present |
 | E5 | Tests (unit, metamorphic, no-hard-coding) and cleanup | Full suite green; fingerprint-style before/after check |
 
-## 8. Decisions needed
-1. **API key:** add `ANTHROPIC_API_KEY` in the environment settings (Network secrets, or as an
-   environment variable). Without it, A1 runs on the keyword baseline and A2 can't fill the
-   screenshot cache.
-2. **Models:** Sonnet 5.5 for both A1 and A2 (recommended), or Haiku 5.5 for A1 to cut cost.
-3. **Identifier-free records:** abstain unless unambiguous (recommended), or always emit the
-   best guess.
+## 8. Decisions and prerequisites
+1. **Free models via OpenRouter** (decided). Defaults to `openrouter/free`; specific `:free`
+   models can be pinned through environment variables.
+2. **Network access:** this environment's network policy currently blocks `openrouter.ai`. It
+   must be added under Allowed domains in the environment's Network access settings.
+3. **API key:** add `OPENROUTER_API_KEY` in the environment settings (Network secrets, or an
+   environment variable). It must never be pasted into chat or committed.
+4. **Identifier-free records:** abstain unless unambiguous (the default, since no other choice
+   was given).

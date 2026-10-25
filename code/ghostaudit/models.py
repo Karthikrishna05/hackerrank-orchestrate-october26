@@ -118,6 +118,18 @@ class Coverage:
 
 
 @dataclass(frozen=True)
+class IntentResult:
+    """Whether a request authorizes deletion, and where that answer came from."""
+
+    authorizes_deletion: bool
+    request_type: str  # deletion | deletion_verification | access | export | correction | marketing_opt_out | account_help | other
+    language: str
+    confidence: float  # 0..1
+    source: str  # "llm:<model id>" or "rules"
+    quote: str = ""
+
+
+@dataclass(frozen=True)
 class Step:
     step_no: int
     phase: str
