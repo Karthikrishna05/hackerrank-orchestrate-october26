@@ -1,0 +1,13 @@
+{
+ "cache_key": "4d76f7c989341b75a16138dbf51e0de7d7a06b6facf753878054550f35fb9eea",
+ "model": "google/gemma-4-31b-it:free",
+ "prompt_version": "intent-v1",
+ "requested_model": "google/gemma-4-31b-it:free",
+ "result": {
+  "authorizes_deletion": true,
+  "confidence": 1.0,
+  "language": "en",
+  "quote": "account associated with this address to be erased",
+  "request_type": "deletion"
+ }
+}

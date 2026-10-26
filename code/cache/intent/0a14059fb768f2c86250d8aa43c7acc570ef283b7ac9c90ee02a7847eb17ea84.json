@@ -1,0 +1,13 @@
+{
+ "cache_key": "0a14059fb768f2c86250d8aa43c7acc570ef283b7ac9c90ee02a7847eb17ea84",
+ "model": "google/gemma-4-31b-it:free",
+ "prompt_version": "intent-v1",
+ "requested_model": "google/gemma-4-31b-it:free",
+ "result": {
+  "authorizes_deletion": true,
+  "confidence": 1.0,
+  "language": "en",
+  "quote": "delete my account and the identity document",
+  "request_type": "deletion"
+ }
+}

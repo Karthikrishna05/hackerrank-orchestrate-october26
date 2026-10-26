@@ -1,0 +1,11 @@
+{
+  "exported_at": "2026-08-12T09:00:00Z",
+  "origin": "integration_management_service",
+  "record_count": 4,
+  "records": [
+    {"recorded_at": "2026-08-12T08:00:00Z", "system": "account_service", "resource_id": "account_1084", "record_type": "USER_PROFILE", "result": "NOT_FOUND", "subject_reference": "M.ALVAREZ@EXAMPLE.COM"},
+    {"recorded_at": "2026-08-12T09:00:00Z", "system": "analytics_platform", "resource_id": "analytics_2034", "record_type": "ANALYTICS_PROFILE", "result": "IDENTIFIABLE", "subject_reference": "m.alvarez@example.com"},
+    {"recorded_at": "2026-08-12T09:00:00Z", "system": "integration_service", "resource_id": "data_flow_9522", "record_type": "DATA_FLOW", "result": "ACTIVE", "subject_reference": "user_907"},
+    {"system": "analytics_platform", "resource_id": "analytics_6830", "record_type": "ANALYTICS_PROFILE", "result": "ANONYMIZED", "subject_reference": "no direct identifier"}
+  ]
+}

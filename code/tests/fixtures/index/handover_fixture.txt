@@ -1,0 +1,8 @@
+CUSTOMER PLATFORM - SHIFT HANDOVER (synthetic test fixture)
+Snapshot: 2026-09-01T12:00:00Z
+
+Fictional records used by code/tests/test_evidence_index.py:
+
+- 2026-09-01T10:00:00Z | account_service | account_901 | USER_PROFILE | FOUND | ana.fixture@example.com
+- 2026-09-01T12:30:00Z | search_service | search_902 | SEARCH_INDEX_ENTRY | FOUND | ANA.FIXTURE@EXAMPLE.COM
+- 2026-09-01T09:00:00Z | account_service | account_903 | USER_PROFILE | NOT_FOUND | other.person@example.com

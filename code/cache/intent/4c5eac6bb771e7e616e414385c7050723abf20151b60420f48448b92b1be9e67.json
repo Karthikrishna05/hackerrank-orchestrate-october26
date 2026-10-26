@@ -1,0 +1,13 @@
+{
+ "cache_key": "4c5eac6bb771e7e616e414385c7050723abf20151b60420f48448b92b1be9e67",
+ "model": "google/gemma-4-31b-it:free",
+ "prompt_version": "intent-v1",
+ "requested_model": "google/gemma-4-31b-it:free",
+ "result": {
+  "authorizes_deletion": true,
+  "confidence": 1.0,
+  "language": "en",
+  "quote": "begin the deletion process for the account",
+  "request_type": "deletion"
+ }
+}

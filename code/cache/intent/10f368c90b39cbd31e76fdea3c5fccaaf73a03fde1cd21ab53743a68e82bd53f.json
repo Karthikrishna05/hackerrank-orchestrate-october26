@@ -1,0 +1,13 @@
+{
+ "cache_key": "10f368c90b39cbd31e76fdea3c5fccaaf73a03fde1cd21ab53743a68e82bd53f",
+ "model": "google/gemma-4-31b-it:free",
+ "prompt_version": "intent-v1",
+ "requested_model": "google/gemma-4-31b-it:free",
+ "result": {
+  "authorizes_deletion": true,
+  "confidence": 1.0,
+  "language": "en",
+  "quote": "request for permanent account deletion",
+  "request_type": "deletion"
+ }
+}

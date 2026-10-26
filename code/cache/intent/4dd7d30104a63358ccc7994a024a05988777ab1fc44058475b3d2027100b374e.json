@@ -1,0 +1,13 @@
+{
+ "cache_key": "4dd7d30104a63358ccc7994a024a05988777ab1fc44058475b3d2027100b374e",
+ "model": "google/gemma-4-31b-it:free",
+ "prompt_version": "intent-v1",
+ "requested_model": "google/gemma-4-31b-it:free",
+ "result": {
+  "authorizes_deletion": true,
+  "confidence": 1.0,
+  "language": "en",
+  "quote": "remove my account and the personal information linked to it",
+  "request_type": "deletion"
+ }
+}

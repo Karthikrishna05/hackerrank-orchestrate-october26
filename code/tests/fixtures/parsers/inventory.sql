@@ -1,0 +1,25 @@
+PRAGMA foreign_keys=ON;
+BEGIN TRANSACTION;
+CREATE TABLE snapshot_scope (origin_system TEXT PRIMARY KEY, captured_at TEXT NOT NULL);
+CREATE TABLE customer_profiles (resource_id TEXT PRIMARY KEY, customer_reference TEXT, full_name TEXT, email TEXT, phone TEXT, email_hash TEXT, account_status TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE customer_search_documents (resource_id TEXT PRIMARY KEY, customer_reference TEXT, display_name TEXT, email TEXT, phone TEXT, email_hash TEXT, index_name TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE customer_analytics_profiles (resource_id TEXT PRIMARY KEY, customer_reference TEXT, email TEXT, phone TEXT, email_hash TEXT, audience_cohort TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE support_records (resource_id TEXT PRIMARY KEY, customer_reference TEXT, requester_name TEXT, requester_email TEXT, requester_phone TEXT, message_excerpt TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE customer_exports (resource_id TEXT PRIMARY KEY, customer_reference TEXT, owner_email TEXT, owner_phone TEXT, object_key TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE connector_subscriptions (resource_id TEXT PRIMARY KEY, customer_reference TEXT, customer_email TEXT, connector_name TEXT NOT NULL, enabled INTEGER NOT NULL CHECK (enabled IN (0,1)), last_delivery_status TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE backup_restore_entries (resource_id TEXT PRIMARY KEY, customer_reference TEXT, customer_email TEXT, archive_key TEXT NOT NULL, restore_allowed INTEGER NOT NULL CHECK (restore_allowed IN (0,1)), updated_at TEXT NOT NULL);
+CREATE TABLE security_audit_records (resource_id TEXT PRIMARY KEY, subject_reference TEXT NOT NULL, event_code TEXT NOT NULL, retention_until TEXT NOT NULL, updated_at TEXT NOT NULL);
+INSERT INTO snapshot_scope VALUES ('account_service', '2026-02-13T07:43:27Z');
+INSERT INTO snapshot_scope VALUES ('integration_service', '2026-02-13T07:40:00Z');
+INSERT INTO customer_profiles VALUES ('account_3626', NULL, NULL, 'O.ERLING10@EXAMPLE.COM', NULL, NULL, 'DELETION_PENDING', '2026-02-13T06:34:26Z');
+INSERT INTO customer_analytics_profiles VALUES ('analytics_5443', NULL, NULL, NULL, NULL, 'mobile_browser', '2026-02-13T07:28:49Z');
+INSERT INTO customer_analytics_profiles VALUES ('analytics_5444', NULL, 'm.vance@example.com', NULL, NULL, 'home_lifestyle', '2026-02-13T07:29:00Z');
+INSERT INTO backup_restore_entries VALUES ('backup_5061', NULL, 'H.LINDQVIST96@EXAMPLE.COM', 'archive/customer-data/backup_5061.tar.zst', '0', '2026-02-13T05:21:17Z');
+INSERT INTO connector_subscriptions VALUES ('data_flow_006', NULL, 'INES.ROUX@EXAMPLE.COM', 'customer_events_connector', '1', 'delivered', '2026-02-13T07:20:06Z');
+INSERT INTO connector_subscriptions VALUES ('data_flow_007', 'user_906', NULL, 'customer_events_connector', '0', 'paused', '2026-02-13T07:21:06Z');
+INSERT INTO security_audit_records VALUES ('audit_record_1112', 'user_906', 'ACCOUNT_DELETION_RECORDED', '2031-12-31T23:59:59Z', '2026-02-13T06:33:08Z');
+INSERT INTO support_records VALUES ('support_6391', NULL, NULL, NULL, NULL, 'Customer supplied contact details for a delivery query.', '2026-02-13T06:47:53Z');
+INSERT INTO support_records VALUES ('support_6392', NULL, NULL, 'ines.roux@example.com', NULL, 'Customer contacted support about account access.', '2026-02-13T06:48:53Z');
+CREATE INDEX idx_customer_profiles_email ON customer_profiles(email);
+COMMIT;
+-- snapshot_completed_at=2026-02-13T07:43:27Z

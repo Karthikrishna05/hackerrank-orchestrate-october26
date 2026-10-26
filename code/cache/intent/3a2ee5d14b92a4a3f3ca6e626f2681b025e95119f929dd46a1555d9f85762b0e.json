@@ -1,0 +1,13 @@
+{
+ "cache_key": "3a2ee5d14b92a4a3f3ca6e626f2681b025e95119f929dd46a1555d9f85762b0e",
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "prompt_version": "intent-v1",
+ "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "result": {
+  "authorizes_deletion": false,
+  "confidence": 0.95,
+  "language": "en",
+  "quote": "This is an information request, not a request to erase it",
+  "request_type": "access"
+ }
+}
